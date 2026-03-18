@@ -1,12 +1,14 @@
 /* ── Player Movement & Animation ── */
 
-const WALK_SPEED = 2.8;
-const RUN_SPEED = 5.5;
-const ACCEL = 8;
-const DECEL = 6;
+// Game-feel speeds (~1.5x real life for better gameplay)
+// Walk ~7.5km/h = 0.84 u/s, Run ~15km/h = 1.68 u/s
+const WALK_SPEED = 1.3;
+const RUN_SPEED = 2.6;
+const ACCEL = 3;
+const DECEL = 4;
 
 const pl = {
-  x: 25.5, y: 15.5, angle: 0,
+  x: 96, y: 96, angle: 0,
   walkTime: 0, speed: 0, targetSpeed: 0,
   moving: false, running: false
 };

@@ -102,3 +102,75 @@ for (const col of vRoads) {
     }
   }
 }
+
+/* ── Traffic signs — yield signs on secondary roads at intersections ── */
+/* Main roads = horizontal (hRoads), secondary = vertical (vRoads) */
+
+const signPoleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+const signPoleGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6);
+const signBorderMat = new THREE.MeshLambertMaterial({ color: 0xCC2222 });
+const signInnerMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+
+function addYieldSign(x, z, facingAngle) {
+  const signGroup = new THREE.Group();
+
+  // Pole
+  const pole = new THREE.Mesh(signPoleGeo, signPoleMat);
+  pole.position.set(x, 0.6, z);
+  pole.castShadow = true;
+  signGroup.add(pole);
+
+  // Sign — inverted triangle (yield)
+  const triOuter = new THREE.Shape();
+  triOuter.moveTo(0, -0.18);
+  triOuter.lineTo(0.16, 0.12);
+  triOuter.lineTo(-0.16, 0.12);
+  triOuter.lineTo(0, -0.18);
+
+  const triInner = new THREE.Shape();
+  const inset = 0.04;
+  triInner.moveTo(0, -0.18 + inset * 1.5);
+  triInner.lineTo(0.16 - inset, 0.12 - inset);
+  triInner.lineTo(-0.16 + inset, 0.12 - inset);
+  triInner.lineTo(0, -0.18 + inset * 1.5);
+
+  const outerGeo = new THREE.ShapeGeometry(triOuter);
+  const innerGeo = new THREE.ShapeGeometry(triInner);
+
+  const signOuter = new THREE.Mesh(outerGeo, signBorderMat);
+  signOuter.position.set(x, 1.15, z);
+  signOuter.rotation.y = facingAngle;
+  signGroup.add(signOuter);
+
+  const signInner = new THREE.Mesh(innerGeo, signInnerMat);
+  signInner.position.set(x, 1.15, z);
+  signInner.rotation.y = facingAngle;
+  // Offset slightly in front to avoid z-fighting
+  signInner.translateZ(0.002);
+  signGroup.add(signInner);
+
+  // Back of sign
+  const backMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
+  const backGeo = new THREE.ShapeGeometry(triOuter);
+  const signBack = new THREE.Mesh(backGeo, backMat);
+  signBack.position.set(x, 1.15, z);
+  signBack.rotation.y = facingAngle + Math.PI;
+  signBack.translateZ(0.002);
+  signGroup.add(signBack);
+
+  scene.add(signGroup);
+}
+
+// Place yield signs at each intersection where secondary (vertical) meets main (horizontal)
+for (const row of hRoads) {
+  for (const col of vRoads) {
+    const hx = col - MW / 2;       // left edge of vertical road
+    const hz = row - MH / 2;       // top edge of horizontal road
+
+    // Sign on right sidewalk, before intersection (approaching from top)
+    addYieldSign(hx + 2.8, hz - 1.2, 0);
+
+    // Sign on left sidewalk, before intersection (approaching from bottom)
+    addYieldSign(hx - 0.8, hz + 3.2, Math.PI);
+  }
+}
