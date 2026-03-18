@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Isomania</title>
-  <link rel="stylesheet" href="css/style.min.css">
+  <link rel="icon" href="favicon.ico?v=<?= filemtime('favicon.ico') ?>" sizes="48x48">
+  <link rel="icon" href="favicon.svg?v=<?= filemtime('favicon.svg') ?>" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="favicon.png?v=<?= filemtime('favicon.png') ?>">
+  <link rel="stylesheet" href="css/style.min.css?v=<?= filemtime('css/style.min.css') ?>">
   <script type="importmap">
   {
     "imports": {
@@ -16,6 +19,7 @@
 <body>
   <div id="loader">
     <div class="loader-content">
+      <img src="favicon.svg?v=<?= filemtime('favicon.svg') ?>" class="loader-logo" alt="Isomania">
       <div class="loader-title">ISOMANIA</div>
       <div class="loader-bar"><div class="loader-fill"></div></div>
       <div class="loader-text">Loading...</div>
@@ -30,6 +34,6 @@
     <div id="hud"></div>
     <div id="hint">WASD / ← ↑ → ↓ &nbsp; Scroll to zoom</div>
   </div>
-  <script type="module" src="js/game.min.js"></script>
+  <script type="module" src="js/game.min.js?v=<?= filemtime('js/game.min.js') ?>"></script>
 </body>
 </html>

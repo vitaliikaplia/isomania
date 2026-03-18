@@ -262,7 +262,8 @@ const fenceMat = new THREE.MeshLambertMaterial({ color: 0x8B7355, transparent: t
 const fencePostGeo = new THREE.BoxGeometry(0.06, 0.6, 0.06);
 const fenceRailGeo = new THREE.BoxGeometry(0.04, 0.04, 1);
 const fenceRailGeoX = new THREE.BoxGeometry(1, 0.04, 0.04);
-const gateMat = new THREE.MeshLambertMaterial({ color: 0x6B5B45, transparent: true });
+const wicketMat = new THREE.MeshLambertMaterial({ color: 0x6B5B45, transparent: true });
+const wicketFrameMat = new THREE.MeshLambertMaterial({ color: 0x5A4A35, transparent: true });
 
 for (let r = 0; r < MH; r++) for (let c = 0; c < MW; c++) {
   const t = MAP[r][c];
@@ -273,37 +274,53 @@ for (let r = 0; r < MH; r++) for (let c = 0; c < MW; c++) {
   const fGroup = new THREE.Group();
   fGroup.userData.occludable = true;
 
-  // Fence post
-  const post = new THREE.Mesh(fencePostGeo, fenceMat);
-  post.position.set(fx, 0.3, fz);
-  post.castShadow = true;
-  fGroup.add(post);
+  if (t === 6) {
+    // Regular fence
+    const post = new THREE.Mesh(fencePostGeo, fenceMat);
+    post.position.set(fx, 0.3, fz);
+    post.castShadow = true;
+    fGroup.add(post);
 
-  // Connect rails to adjacent fence tiles
-  // Check right neighbor
-  if (c + 1 < MW && (MAP[r][c + 1] === 6 || MAP[r][c + 1] === 7)) {
-    const railTop = new THREE.Mesh(fenceRailGeoX, fenceMat);
-    railTop.position.set(fx + 0.5, 0.5, fz);
-    fGroup.add(railTop);
-    const railBot = new THREE.Mesh(fenceRailGeoX, fenceMat);
-    railBot.position.set(fx + 0.5, 0.2, fz);
-    fGroup.add(railBot);
-  }
-  // Check bottom neighbor
-  if (r + 1 < MH && (MAP[r + 1][c] === 6 || MAP[r + 1][c] === 7)) {
-    const railTop = new THREE.Mesh(fenceRailGeo, fenceMat);
-    railTop.position.set(fx, 0.5, fz + 0.5);
-    fGroup.add(railTop);
-    const railBot = new THREE.Mesh(fenceRailGeo, fenceMat);
-    railBot.position.set(fx, 0.2, fz + 0.5);
-    fGroup.add(railBot);
-  }
+    // Rails to right neighbor
+    if (c + 1 < MW && (MAP[r][c + 1] === 6 || MAP[r][c + 1] === 7)) {
+      const railTop = new THREE.Mesh(fenceRailGeoX, fenceMat);
+      railTop.position.set(fx + 0.5, 0.5, fz);
+      fGroup.add(railTop);
+      const railBot = new THREE.Mesh(fenceRailGeoX, fenceMat);
+      railBot.position.set(fx + 0.5, 0.2, fz);
+      fGroup.add(railBot);
+    }
+    // Rails to bottom neighbor
+    if (r + 1 < MH && (MAP[r + 1][c] === 6 || MAP[r + 1][c] === 7)) {
+      const railTop = new THREE.Mesh(fenceRailGeo, fenceMat);
+      railTop.position.set(fx, 0.5, fz + 0.5);
+      fGroup.add(railTop);
+      const railBot = new THREE.Mesh(fenceRailGeo, fenceMat);
+      railBot.position.set(fx, 0.2, fz + 0.5);
+      fGroup.add(railBot);
+    }
+  } else {
+    // Wicket gate (type 7) — same as fence but shorter, thinner post
+    const gatePost = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.45, 0.05), wicketFrameMat);
+    gatePost.position.set(fx, 0.225, fz);
+    gatePost.castShadow = true;
+    fGroup.add(gatePost);
 
-  // Gate marker — slightly different look
-  if (t === 7) {
-    const gateTop = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.08), gateMat);
-    gateTop.position.set(fx, 0.64, fz);
-    fGroup.add(gateTop);
+    // Connect rails to neighbors — same logic as fence but lower
+    if (c + 1 < MW && (MAP[r][c + 1] === 6 || MAP[r][c + 1] === 7)) {
+      for (const y of [0.15, 0.32]) {
+        const rail = new THREE.Mesh(fenceRailGeoX, wicketMat);
+        rail.position.set(fx + 0.5, y, fz);
+        fGroup.add(rail);
+      }
+    }
+    if (r + 1 < MH && (MAP[r + 1][c] === 6 || MAP[r + 1][c] === 7)) {
+      for (const y of [0.15, 0.32]) {
+        const rail = new THREE.Mesh(fenceRailGeo, wicketMat);
+        rail.position.set(fx, y, fz + 0.5);
+        fGroup.add(rail);
+      }
+    }
   }
 
   scene.add(fGroup);

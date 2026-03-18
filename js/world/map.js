@@ -35,7 +35,7 @@ for (const col of vRoads) {
 }
 
 /* ── Procedural buildings ── */
-/* 6=fence, 7=fence gate */
+/* 6=fence, 7=fence gate (wicket) */
 const buildings = [];
 srand(42);
 
@@ -43,32 +43,38 @@ srand(42);
 const hBounds = [0, ...hRoads.map(r => r - 1), MH - 1];
 const vBounds = [0, ...vRoads.map(c => c - 1), MW - 1];
 
-function tryPlaceBuilding(top, bot, left, right) {
-  const bw = randInt(3, 5);
-  const bd = randInt(3, 4);
-  const br = randInt(top, bot - bd);
-  const bc = randInt(left, right - bw);
+// Lot size: building + yard + fence = ~10 tiles wide
+const LOT_W = 10;
+const LOT_D = 9;
+const YARD_SETBACK = 3; // tiles from road to building
 
-  // Check no overlap (with 1-tile margin)
-  for (let dr = -1; dr <= bd; dr++) {
-    for (let dc = -1; dc <= bw; dc++) {
-      const rr = br + dr, cc = bc + dc;
-      if (rr < 0 || rr >= MH || cc < 0 || cc >= MW) return null;
-      if (MAP[rr][cc] !== 0) return null;
+function canPlace(r, c, w, d, margin) {
+  for (let dr = -margin; dr < d + margin; dr++) {
+    for (let dc = -margin; dc < w + margin; dc++) {
+      const rr = r + dr, cc = c + dc;
+      if (rr < 0 || rr >= MH || cc < 0 || cc >= MW) return false;
+      if (MAP[rr][cc] !== 0) return false;
     }
   }
-
-  for (let dr = 0; dr < bd; dr++) for (let dc = 0; dc < bw; dc++) {
-    MAP[br + dr][bc + dc] = 1;
-  }
-  buildings.push({ r: br, c: bc, w: bw, d: bd });
-  return { r: br, c: bc, w: bw, d: bd };
+  return true;
 }
 
-function addFence(br, bc, bw, bd) {
-  // Fence around building with 1-tile gap, gate on front (south) side
-  const fTop = br - 2, fBot = br + bd + 1;
-  const fLeft = bc - 2, fRight = bc + bw + 1;
+function placeBuilding(r, c, w, d) {
+  for (let dr = 0; dr < d; dr++) for (let dc = 0; dc < w; dc++) {
+    MAP[r + dr][c + dc] = 1;
+  }
+  buildings.push({ r: r, c: c, w: w, d: d });
+  return { r: r, c: c, w: w, d: d };
+}
+
+// roadSide: 'top','bottom','left','right' — which road the fence gate faces
+function addFence(br, bc, bw, bd, roadSide) {
+  const pad = 2; // fence distance from building
+  const fTop = br - pad, fBot = br + bd + pad - 1;
+  const fLeft = bc - pad, fRight = bc + bw + pad - 1;
+
+  const gateC = bc + Math.floor(bw / 2);
+  const gateR = br + Math.floor(bd / 2);
 
   for (let r = fTop; r <= fBot; r++) {
     for (let c = fLeft; c <= fRight; c++) {
@@ -76,49 +82,54 @@ function addFence(br, bc, bw, bd) {
       if (MAP[r][c] !== 0) continue;
       const isEdge = r === fTop || r === fBot || c === fLeft || c === fRight;
       if (!isEdge) continue;
-      // Gate: center of south side
-      const centerC = bc + Math.floor(bw / 2);
-      if (r === fBot && (c === centerC || c === centerC + 1)) {
-        MAP[r][c] = 7; // gate
-      } else {
-        MAP[r][c] = 6; // fence
-      }
+
+      // Gate placement based on road side
+      let isGate = false;
+      if (roadSide === 'bottom' && r === fBot && Math.abs(c - gateC) <= 0) isGate = true;
+      if (roadSide === 'top' && r === fTop && Math.abs(c - gateC) <= 0) isGate = true;
+      if (roadSide === 'right' && c === fRight && Math.abs(r - gateR) <= 0) isGate = true;
+      if (roadSide === 'left' && c === fLeft && Math.abs(r - gateR) <= 0) isGate = true;
+
+      MAP[r][c] = isGate ? 7 : 6;
     }
   }
 }
 
+// Place buildings in rows along each road edge
 for (let bi = 0; bi < hBounds.length - 1; bi++) {
   for (let bj = 0; bj < vBounds.length - 1; bj++) {
-    const blockTop = hBounds[bi] + (bi === 0 ? 2 : 4);
+    const blockTop = hBounds[bi] + 3;
     const blockBot = hBounds[bi + 1] - 2;
-    const blockLeft = vBounds[bj] + (bj === 0 ? 2 : 4);
+    const blockLeft = vBounds[bj] + 3;
     const blockRight = vBounds[bj + 1] - 2;
 
     const blockW = blockRight - blockLeft;
     const blockH = blockBot - blockTop;
-    if (blockW < 8 || blockH < 8) continue;
+    if (blockW < 10 || blockH < 10) continue;
 
-    // Place buildings along road edges first (close to roads)
-    // Top row of block (near top road)
-    for (let attempt = 0; attempt < 3; attempt++) {
-      tryPlaceBuilding(blockTop, blockTop + Math.floor(blockH / 3), blockLeft, blockRight);
+    // Row along top road (buildings face top/north)
+    for (let col = blockLeft; col + 5 <= blockRight; col += LOT_W + randInt(0, 2)) {
+      const bw = randInt(3, 5);
+      const bd = randInt(3, 4);
+      const br = blockTop + YARD_SETBACK;
+      const bc = col + randInt(0, 1);
+      if (canPlace(br, bc, bw, bd, 3)) {
+        const b = placeBuilding(br, bc, bw, bd);
+        if (rand() < 0.45) addFence(b.r, b.c, b.w, b.d, 'top');
+      }
     }
-    // Bottom row of block (near bottom road)
-    for (let attempt = 0; attempt < 3; attempt++) {
-      tryPlaceBuilding(blockBot - Math.floor(blockH / 3), blockBot, blockLeft, blockRight);
-    }
-    // Center area — 1-2 more buildings
-    for (let attempt = 0; attempt < 2; attempt++) {
-      tryPlaceBuilding(blockTop + 3, blockBot - 3, blockLeft + 2, blockRight - 2);
-    }
-  }
-}
 
-// Add fences around ~40% of buildings
-srand(555);
-for (const b of buildings) {
-  if (rand() < 0.4) {
-    addFence(b.r, b.c, b.w, b.d);
+    // Row along bottom road (buildings face bottom/south)
+    for (let col = blockLeft; col + 5 <= blockRight; col += LOT_W + randInt(0, 2)) {
+      const bw = randInt(3, 5);
+      const bd = randInt(3, 4);
+      const br = blockBot - YARD_SETBACK - bd;
+      const bc = col + randInt(0, 1);
+      if (canPlace(br, bc, bw, bd, 3)) {
+        const b = placeBuilding(br, bc, bw, bd);
+        if (rand() < 0.45) addFence(b.r, b.c, b.w, b.d, 'bottom');
+      }
+    }
   }
 }
 
@@ -205,7 +216,7 @@ const COLLIDERS = {
   1: { shape: 'box', hw: 0.5, hd: 0.5 },
   2: { shape: 'circle', radius: 0.2 },
   3: { shape: 'box', hw: 0.25, hd: 0.25 },
-  6: { shape: 'box', hw: 0.1, hd: 0.1 },  // fence post
+  6: { shape: 'circle', radius: 0.15 },  // fence — thin post collision
 };
 
 function isSolid(tx, ty) {
