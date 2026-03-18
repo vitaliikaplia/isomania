@@ -1,72 +1,91 @@
 # Isomania
 
-PZ-like isometric survival game built with Three.js in the browser.
+Isomania is a browser-based isometric survival prototype inspired by classic zombie sandbox games and built with Three.js.
 
-## Tech Stack
+## Live Project
 
-- **Three.js** (OrthographicCamera) — 2.5D isometric rendering
-- **Prepros** — JS concat/minify, SCSS compilation
-- **PHP** — entry point served via Laravel Herd
+- Website: [https://isomania.online/](https://isomania.online/)
 
-## Project Structure
+## Screenshot
 
-```
-├── index.php                 # Entry HTML (PHP for asset versioning)
-├── prepros.config            # Prepros build config
-├── favicon.svg / .ico / .png # Favicons
-├── scss/
-│   └── style.scss            # Styles source → css/style.min.css
-├── css/
-│   └── style.min.css         # Compiled CSS (Prepros output)
-└── js/
-    ├── game.js               # Entry point (@prepros-append)
-    ├── game.min.js            # Compiled JS (Prepros output)
-    ├── engine/
-    │   ├── renderer.js       # Scene, camera, renderer, lighting
-    │   ├── input.js          # Keyboard (e.code), mouse, context menu
-    │   └── camera.js         # Camera follow, zoom, PZ-style occlusion
-    ├── world/
-    │   ├── map.js            # Procedural map (192x192), BFS groups, collisions
-    │   ├── terrain.js        # InstancedMesh terrain, roads, sidewalks, curbs, markings, yield signs
-    │   ├── buildings.js      # Buildings (1-2 floors, gable/flat roofs), fences, wicket gates
-    │   └── trees.js          # Tree meshes (trunk + foliage layers)
-    ├── entities/
-    │   ├── player.js         # Player mesh (pivot groups for animation)
-    │   └── movement.js       # Movement, acceleration/deceleration, walk/run
-    ├── ui/
-    │   └── hud.js            # HUD, fullscreen
-    └── core/
-        └── loop.js           # Game loop, resize, loading screen, name input
-```
+![Isomania Screenshot](./screenshot.png)
+
+## Overview
+
+The project focuses on a stylized 2.5D world, procedural neighborhood generation, readable isometric navigation, and lightweight browser delivery without a heavyweight bundler setup.
+
+## Core Highlights
+
+- Procedurally generated `192x192` world with roads, sidewalks, houses, fences, gates, trees, and small structures
+- Isometric rendering with `THREE.OrthographicCamera`
+- Player movement with acceleration, sprinting, smooth facing, and pivot-based animation
+- Occlusion system for buildings, trees, and fences between camera and player
+- Segment-based fence and gate collision to prevent clipping through barriers
+- PHP-powered session bootstrap, cache busting, and Telegram login notifications
+- GeoIP-enriched backend session info for Telegram alerts
 
 ## Controls
 
-| Key | Action |
-|-----|--------|
-| WASD / Arrow keys | Move |
-| Shift + Move | Sprint |
-| Scroll wheel | Zoom in/out (0.4x — 10x) |
+| Input | Action |
+| ----- | ------ |
+| `WASD` / Arrow keys | Move |
+| `Shift` + move | Sprint |
+| Mouse wheel | Zoom in / out |
 
-## Features
+## Tech Stack
 
-- **World**: 192x192 procedurally generated tile map with seeded random
-- **Roads**: 5x5 road grid with asphalt, sidewalks, curbs, dashed lane markings
-- **Buildings**: 1-2 floor houses with gable/flat roofs, windows per floor, doors with frames, foundations
-- **Fences**: Wooden fences around ~45% of buildings with wicket gates facing roads
-- **Traffic signs**: Yield signs on secondary roads at intersections
-- **Trees**: Multi-layered foliage with trunk collision only
-- **Player**: PZ-style adult proportions, pivot-based walk/run animation (arms from shoulders, legs from hips)
-- **Movement**: Acceleration/deceleration physics, walk (~8 km/h) and sprint (~16 km/h)
-- **Occlusion**: Buildings/trees/fences fade to near-transparent when blocking camera→player view
-- **Collision**: Data-driven system — circle colliders for trees/fences, box for buildings/crates
-- **Terrain**: InstancedMesh rendering for performance (~15 draw calls instead of 37k)
-- **Shadows**: PCFSoftShadowMap with light following player
-- **Loading screen**: Logo, progress bar, name input (saved to localStorage), Play button
-- **Cache busting**: PHP `filemtime()` versioning for Cloudflare compatibility
+- `Three.js` for rendering and scene management
+- `Prepros` for JS concatenation and SCSS compilation
+- `SCSS` for source styles
+- `PHP` for entrypoint rendering, session handling, and backend notifications
+- `GeoIP2` for location lookup in Telegram session alerts
 
-## Development
+## Project Structure
 
-1. Open the project in [Prepros](https://prepros.io/)
-2. Prepros watches `js/game.js` → builds `js/game.min.js`
-3. Prepros watches `scss/style.scss` → builds `css/style.min.css`
-4. Serve via [Laravel Herd](https://herd.laravel.com/) at `isomania.test`
+```text
+├── index.php                  # Entry HTML, session bootstrap, asset versioning
+├── notify.php                 # Backend endpoint for Telegram login notifications
+├── composer.json              # PHP dependencies
+├── geo/                       # GeoIP databases
+├── prepros.config             # Prepros build configuration
+├── scss/style.scss            # Source styles
+├── css/style.min.css          # Compiled styles
+└── js/
+    ├── game.js                # Prepros entry file and append order
+    ├── game.min.js            # Built runtime bundle
+    ├── core/
+    │   ├── config.js          # Shared runtime configuration
+    │   └── loop.js            # Loader flow and main loop
+    ├── engine/
+    │   ├── renderer.js        # Scene, camera, renderer, lights, occlusion registry
+    │   ├── input.js           # Input handling
+    │   └── camera.js          # Camera follow, zoom, occlusion updates
+    ├── world/
+    │   ├── world-data.js      # Procedural world data generation
+    │   ├── map.js             # Coordinate helpers and collision queries
+    │   ├── terrain.js         # Ground tiles, curbs, road markings, signs
+    │   ├── buildings.js       # Buildings, fences, gates, small structures
+    │   └── trees.js           # Tree rendering
+    ├── entities/
+    │   ├── player.js          # Player mesh
+    │   └── movement.js        # Player movement and animation
+    └── ui/
+        └── hud.js             # HUD and fullscreen toggle
+```
+
+## Gameplay / Systems
+
+- Procedural block layout with seeded randomness
+- Two-speed movement model with acceleration and deceleration
+- Player occlusion handling for obstructing world geometry
+- Data-driven collision for solid world objects
+- Fence and wicket collision based on rendered segment shape rather than coarse tile checks
+- Player name persistence through `localStorage`
+- Telegram notification when a player enters the game
+
+## Development Notes
+
+- JavaScript source files are concatenated through `@prepros-append` in `js/game.js`
+- Project files do not use local `import` / `export` between gameplay modules
+- Styling source lives in `scss/style.scss` and compiles to `css/style.min.css`
+- After changing source JS or SCSS, rebuild the generated assets through `Prepros`

@@ -13,7 +13,7 @@ btnFs.addEventListener('click', () => {
 });
 
 document.addEventListener('fullscreenchange', () => {
-  btnFs.textContent = document.fullscreenElement ? '✕ Exit' : '⛶ Fullscreen';
+  btnFs.textContent = document.fullscreenElement ? '✕ Вийти' : '⛶ На весь екран';
   setTimeout(onResize, 100);
 });
 
