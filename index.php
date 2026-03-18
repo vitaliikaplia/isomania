@@ -1,3 +1,10 @@
+<?php
+session_start();
+
+if (empty($_SESSION['game_token'])) {
+    $_SESSION['game_token'] = bin2hex(random_bytes(16));
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +41,12 @@
     <div id="hud"></div>
     <div id="hint">WASD / ← ↑ → ↓ &nbsp; Scroll to zoom</div>
   </div>
+  <script>
+    window.ISOMANIA_BOOTSTRAP = {
+      gameToken: '<?= htmlspecialchars($_SESSION['game_token'], ENT_QUOTES, 'UTF-8') ?>',
+      notifyUrl: 'notify.php?action=join'
+    };
+  </script>
   <script type="module" src="js/game.min.js?v=<?= filemtime('js/game.min.js') ?>"></script>
 </body>
 </html>
