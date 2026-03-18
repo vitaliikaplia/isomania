@@ -1,165 +1,177 @@
 /* ── Player Mesh ── */
-/* PZ-style: adult proportions, muted colors, minimal face */
-/* Mostly box shapes with slight rounding on head/hands only */
+/* PZ-style with pivot groups for proper limb rotation */
 
 const playerGroup = new THREE.Group();
 const playerScale = 0.55;
 
-// ── Shoes ──
-const shoeGeo = new THREE.BoxGeometry(0.13, 0.08, 0.2);
-const shoeMat = new THREE.MeshLambertMaterial({ color: 0x2A2018 });
-const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
-shoeL.position.set(-0.08, 0.04, 0.02);
-shoeL.castShadow = true;
-playerGroup.add(shoeL);
-const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
-shoeR.position.set(0.08, 0.04, 0.02);
-shoeR.castShadow = true;
-playerGroup.add(shoeR);
+// ── Upper body group (bobs up/down during walk) ──
+const upperBody = new THREE.Group();
+upperBody.position.y = 0.46;
+playerGroup.add(upperBody);
 
-// ── Legs (jeans) ──
-const legGeo = new THREE.BoxGeometry(0.13, 0.38, 0.14);
-const legMat = new THREE.MeshLambertMaterial({ color: 0x3A4A5C });
-const legL = new THREE.Mesh(legGeo, legMat);
-legL.position.set(-0.08, 0.27, 0);
-legL.castShadow = true;
-playerGroup.add(legL);
-const legR = new THREE.Mesh(legGeo, legMat);
-legR.position.set(0.08, 0.27, 0);
-legR.castShadow = true;
-playerGroup.add(legR);
-
-// ── Belt ──
-const beltGeo = new THREE.BoxGeometry(0.32, 0.04, 0.17);
-const beltMat = new THREE.MeshLambertMaterial({ color: 0x3A2A1A });
-const belt = new THREE.Mesh(beltGeo, beltMat);
-belt.position.y = 0.48;
-playerGroup.add(belt);
-
-// ── Torso (shirt) ──
+// Torso
 const torsoGeo = new THREE.BoxGeometry(0.3, 0.38, 0.16);
 const torsoMat = new THREE.MeshLambertMaterial({ color: 0x5A7044 });
 const torso = new THREE.Mesh(torsoGeo, torsoMat);
-torso.position.y = 0.69;
+torso.position.y = 0.23;
 torso.castShadow = true;
-playerGroup.add(torso);
+upperBody.add(torso);
 
-// ── Collar ──
+// Belt
+const beltGeo = new THREE.BoxGeometry(0.32, 0.04, 0.17);
+const beltMat = new THREE.MeshLambertMaterial({ color: 0x3A2A1A });
+const belt = new THREE.Mesh(beltGeo, beltMat);
+belt.position.y = 0.02;
+upperBody.add(belt);
+
+// Collar
 const collarGeo = new THREE.BoxGeometry(0.22, 0.03, 0.18);
 const collarMat = new THREE.MeshLambertMaterial({ color: 0x4A6038 });
 const collar = new THREE.Mesh(collarGeo, collarMat);
-collar.position.y = 0.89;
-playerGroup.add(collar);
+collar.position.y = 0.43;
+upperBody.add(collar);
 
-// ── Shoulders ──
+// Shoulders
 const shoulderGeo = new THREE.BoxGeometry(0.38, 0.06, 0.18);
 const shoulderMat = new THREE.MeshLambertMaterial({ color: 0x526840 });
 const shoulders = new THREE.Mesh(shoulderGeo, shoulderMat);
-shoulders.position.y = 0.86;
+shoulders.position.y = 0.40;
 shoulders.castShadow = true;
-playerGroup.add(shoulders);
+upperBody.add(shoulders);
 
-// ── Arms ──
+// ── Left arm pivot (at shoulder) ──
+const armPivotL = new THREE.Group();
+armPivotL.position.set(-0.2, 0.40, 0);
+upperBody.add(armPivotL);
+
 const armGeo = new THREE.BoxGeometry(0.1, 0.34, 0.12);
 const armMat = new THREE.MeshLambertMaterial({ color: 0x526840 });
 const armL = new THREE.Mesh(armGeo, armMat);
-armL.position.set(-0.2, 0.68, 0);
+armL.position.y = -0.17;
 armL.castShadow = true;
-playerGroup.add(armL);
-const armR = new THREE.Mesh(armGeo, armMat);
-armR.position.set(0.2, 0.68, 0);
-armR.castShadow = true;
-playerGroup.add(armR);
+armPivotL.add(armL);
 
-// ── Hands (slight rounding — spheres) ──
 const handGeo = new THREE.SphereGeometry(0.04, 6, 6);
 const skinMat = new THREE.MeshLambertMaterial({ color: 0xC49A6C });
 const handL = new THREE.Mesh(handGeo, skinMat);
-handL.position.set(-0.2, 0.49, 0);
-playerGroup.add(handL);
+handL.position.y = -0.36;
+armPivotL.add(handL);
+
+// ── Right arm pivot (at shoulder) ──
+const armPivotR = new THREE.Group();
+armPivotR.position.set(0.2, 0.40, 0);
+upperBody.add(armPivotR);
+
+const armR = new THREE.Mesh(armGeo, armMat);
+armR.position.y = -0.17;
+armR.castShadow = true;
+armPivotR.add(armR);
+
 const handR = new THREE.Mesh(handGeo, skinMat);
-handR.position.set(0.2, 0.49, 0);
-playerGroup.add(handR);
+handR.position.y = -0.36;
+armPivotR.add(handR);
 
 // ── Neck ──
 const neckGeo = new THREE.CylinderGeometry(0.055, 0.065, 0.06, 6);
 const neckMat = new THREE.MeshLambertMaterial({ color: 0xC49A6C });
 const neck = new THREE.Mesh(neckGeo, neckMat);
-neck.position.y = 0.93;
-playerGroup.add(neck);
+neck.position.y = 0.47;
+upperBody.add(neck);
 
-// ── Head (slight rounding — sphere, not box) ──
+// ── Head group (for subtle bob) ──
+const headGroup = new THREE.Group();
+headGroup.position.y = 0.62;
+upperBody.add(headGroup);
+
 const headGeo = new THREE.SphereGeometry(0.13, 8, 8);
 const headMat = new THREE.MeshLambertMaterial({ color: 0xC49A6C });
 const head = new THREE.Mesh(headGeo, headMat);
-head.position.y = 1.08;
 head.scale.set(1, 1.05, 0.95);
 head.castShadow = true;
-playerGroup.add(head);
+headGroup.add(head);
 
-// ── Hair ──
+// Hair
 const hairMat = new THREE.MeshLambertMaterial({ color: 0x3A2A1A });
-const hairTopGeo = new THREE.BoxGeometry(0.24, 0.06, 0.22);
-const hairTop = new THREE.Mesh(hairTopGeo, hairMat);
-hairTop.position.y = 1.2;
-playerGroup.add(hairTop);
+const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.22), hairMat);
+hairTop.position.y = 0.12;
+headGroup.add(hairTop);
+const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.04), hairMat);
+hairBack.position.set(0, 0.03, -0.1);
+headGroup.add(hairBack);
+const hairSideL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.18), hairMat);
+hairSideL.position.set(-0.12, 0.05, 0);
+headGroup.add(hairSideL);
+const hairSideR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.1, 0.18), hairMat);
+hairSideR.position.set(0.12, 0.05, 0);
+headGroup.add(hairSideR);
 
-const hairBackGeo = new THREE.BoxGeometry(0.24, 0.16, 0.04);
-const hairBack = new THREE.Mesh(hairBackGeo, hairMat);
-hairBack.position.set(0, 1.11, -0.1);
-playerGroup.add(hairBack);
-
-const hairSideGeo = new THREE.BoxGeometry(0.03, 0.1, 0.18);
-const hairSideL = new THREE.Mesh(hairSideGeo, hairMat);
-hairSideL.position.set(-0.12, 1.13, 0);
-playerGroup.add(hairSideL);
-const hairSideR = new THREE.Mesh(hairSideGeo, hairMat);
-hairSideR.position.set(0.12, 1.13, 0);
-playerGroup.add(hairSideR);
-
-// ── Face (minimal PZ-style) ──
-const eyeGeo = new THREE.BoxGeometry(0.035, 0.025, 0.01);
+// Face
 const eyeMat = new THREE.MeshBasicMaterial({ color: 0x2A2015 });
-const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-eyeL.position.set(-0.045, 1.09, 0.12);
-playerGroup.add(eyeL);
-const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-eyeR.position.set(0.045, 1.09, 0.12);
-playerGroup.add(eyeR);
+const eyeL = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.025, 0.01), eyeMat);
+eyeL.position.set(-0.045, 0.01, 0.12);
+headGroup.add(eyeL);
+const eyeR = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.025, 0.01), eyeMat);
+eyeR.position.set(0.045, 0.01, 0.12);
+headGroup.add(eyeR);
 
-// Nose — subtle
-const noseGeo = new THREE.BoxGeometry(0.03, 0.03, 0.02);
-const noseMat = new THREE.MeshLambertMaterial({ color: 0xB8896A });
-const nose = new THREE.Mesh(noseGeo, noseMat);
-nose.position.set(0, 1.06, 0.125);
-playerGroup.add(nose);
+const nose = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.02), new THREE.MeshLambertMaterial({ color: 0xB8896A }));
+nose.position.set(0, -0.02, 0.125);
+headGroup.add(nose);
 
-// Mouth
-const mouthGeo = new THREE.BoxGeometry(0.06, 0.01, 0.01);
-const mouthMat = new THREE.MeshBasicMaterial({ color: 0x8A5A4A });
-const mouth = new THREE.Mesh(mouthGeo, mouthMat);
-mouth.position.set(0, 1.025, 0.12);
-playerGroup.add(mouth);
+const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.01, 0.01), new THREE.MeshBasicMaterial({ color: 0x8A5A4A }));
+mouth.position.set(0, -0.055, 0.12);
+headGroup.add(mouth);
 
-// Ears
-const earGeo = new THREE.BoxGeometry(0.03, 0.06, 0.05);
 const earMat = new THREE.MeshLambertMaterial({ color: 0xB88A60 });
-const earL = new THREE.Mesh(earGeo, earMat);
-earL.position.set(-0.125, 1.08, 0);
-playerGroup.add(earL);
-const earR = new THREE.Mesh(earGeo, earMat);
-earR.position.set(0.125, 1.08, 0);
-playerGroup.add(earR);
+const earL = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.06, 0.05), earMat);
+earL.position.set(-0.125, 0, 0);
+headGroup.add(earL);
+const earR = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.06, 0.05), earMat);
+earR.position.set(0.125, 0, 0);
+headGroup.add(earR);
+
+// ── Left leg pivot (at hip) ──
+const legPivotL = new THREE.Group();
+legPivotL.position.set(-0.08, 0.46, 0);
+playerGroup.add(legPivotL);
+
+const legGeo = new THREE.BoxGeometry(0.13, 0.38, 0.14);
+const legMat = new THREE.MeshLambertMaterial({ color: 0x3A4A5C });
+const legL = new THREE.Mesh(legGeo, legMat);
+legL.position.y = -0.19;
+legL.castShadow = true;
+legPivotL.add(legL);
+
+const shoeGeo = new THREE.BoxGeometry(0.13, 0.08, 0.2);
+const shoeMat = new THREE.MeshLambertMaterial({ color: 0x2A2018 });
+const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
+shoeL.position.set(0, -0.4, 0.02);
+shoeL.castShadow = true;
+legPivotL.add(shoeL);
+
+// ── Right leg pivot (at hip) ──
+const legPivotR = new THREE.Group();
+legPivotR.position.set(0.08, 0.46, 0);
+playerGroup.add(legPivotR);
+
+const legR = new THREE.Mesh(legGeo, legMat);
+legR.position.y = -0.19;
+legR.castShadow = true;
+legPivotR.add(legR);
+
+const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
+shoeR.position.set(0, -0.4, 0.02);
+shoeR.castShadow = true;
+legPivotR.add(shoeR);
 
 // ── Shadow blob ──
 const shadowGeo = new THREE.CircleGeometry(0.18, 12);
-const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 });
-const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+const shadowMeshMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 });
+const shadowMesh = new THREE.Mesh(shadowGeo, shadowMeshMat);
 shadowMesh.rotation.x = -Math.PI / 2;
 shadowMesh.position.y = 0.01;
 playerGroup.add(shadowMesh);
 
 // Apply scale
 playerGroup.scale.set(playerScale, playerScale, playerScale);
-
 scene.add(playerGroup);

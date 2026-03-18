@@ -181,6 +181,13 @@ for (let r = 0; r < MH; r++) for (let c = 0; c < MW; c++) {
 }
 
 /* ── Collision ── */
+/* Collision matches actual mesh size, not full tile */
+const COLLIDERS = {
+  // type: { shape: 'circle'|'box', radius / hw,hd (half-width, half-depth) }
+  1: { shape: 'box', hw: 0.5, hd: 0.5 },      // buildings — full tile
+  2: { shape: 'circle', radius: 0.2 },           // trees — trunk only
+  3: { shape: 'box', hw: 0.25, hd: 0.25 },      // crates — half tile
+};
 
 function isSolid(tx, ty) {
   const c = Math.round(tx), r = Math.round(ty);
@@ -188,8 +195,14 @@ function isSolid(tx, ty) {
   for (const [dc, dr] of [[0,0],[1,0],[-1,0],[0,1],[0,-1]]) {
     const nc = c + dc, nr = r + dr;
     if (nc < 0 || nc >= MW || nr < 0 || nr >= MH) continue;
-    const t = MAP[nr][nc];
-    if ((t === 1 || t === 2 || t === 3) && Math.abs(tx - nc) < 0.7 && Math.abs(ty - nr) < 0.7) return true;
+    const col = COLLIDERS[MAP[nr][nc]];
+    if (!col) continue;
+    const dx = tx - nc, dy = ty - nr;
+    if (col.shape === 'circle') {
+      if (dx * dx + dy * dy < col.radius * col.radius) return true;
+    } else {
+      if (Math.abs(dx) < col.hw && Math.abs(dy) < col.hd) return true;
+    }
   }
   return false;
 }
