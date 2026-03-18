@@ -11,8 +11,9 @@ PZ-like isometric survival game built with Three.js in the browser.
 ## Project Structure
 
 ```
-├── index.php                 # Entry HTML
+├── index.php                 # Entry HTML (PHP for asset versioning)
 ├── prepros.config            # Prepros build config
+├── favicon.svg / .ico / .png # Favicons
 ├── scss/
 │   └── style.scss            # Styles source → css/style.min.css
 ├── css/
@@ -22,20 +23,20 @@ PZ-like isometric survival game built with Three.js in the browser.
     ├── game.min.js            # Compiled JS (Prepros output)
     ├── engine/
     │   ├── renderer.js       # Scene, camera, renderer, lighting
-    │   ├── input.js          # Keyboard, mouse, context menu
-    │   └── camera.js         # Camera follow, zoom, occlusion
+    │   ├── input.js          # Keyboard (e.code), mouse, context menu
+    │   └── camera.js         # Camera follow, zoom, PZ-style occlusion
     ├── world/
-    │   ├── map.js            # Map data, BFS groups, collisions
-    │   ├── terrain.js        # Ground tiles, roads, sidewalks, markings
-    │   ├── buildings.js      # Building meshes, windows, doors
-    │   └── trees.js          # Tree meshes
+    │   ├── map.js            # Procedural map (192x192), BFS groups, collisions
+    │   ├── terrain.js        # InstancedMesh terrain, roads, sidewalks, curbs, markings, yield signs
+    │   ├── buildings.js      # Buildings (1-2 floors, gable/flat roofs), fences, wicket gates
+    │   └── trees.js          # Tree meshes (trunk + foliage layers)
     ├── entities/
     │   ├── player.js         # Player mesh (pivot groups for animation)
-    │   └── movement.js       # Movement, acceleration, walk/run animation
+    │   └── movement.js       # Movement, acceleration/deceleration, walk/run
     ├── ui/
     │   └── hud.js            # HUD, fullscreen
     └── core/
-        └── loop.js           # Game loop, resize, loading screen
+        └── loop.js           # Game loop, resize, loading screen, name input
 ```
 
 ## Controls
@@ -44,19 +45,24 @@ PZ-like isometric survival game built with Three.js in the browser.
 |-----|--------|
 | WASD / Arrow keys | Move |
 | Shift + Move | Sprint |
-| Scroll wheel | Zoom in/out |
+| Scroll wheel | Zoom in/out (0.4x — 10x) |
 
 ## Features
 
-- Isometric 2.5D world with Three.js OrthographicCamera
-- 48x48 tile map with roads, sidewalks, buildings, trees
-- PZ-style player with pivot-based walk/run animation
-- Acceleration/deceleration movement physics
-- PZ-style occlusion — objects between camera and player fade transparent
-- Data-driven collision system (circle for trees, box for buildings)
-- Dynamic shadows (PCFSoftShadowMap)
-- Loading screen with name input
-- Fullscreen support
+- **World**: 192x192 procedurally generated tile map with seeded random
+- **Roads**: 5x5 road grid with asphalt, sidewalks, curbs, dashed lane markings
+- **Buildings**: 1-2 floor houses with gable/flat roofs, windows per floor, doors with frames, foundations
+- **Fences**: Wooden fences around ~45% of buildings with wicket gates facing roads
+- **Traffic signs**: Yield signs on secondary roads at intersections
+- **Trees**: Multi-layered foliage with trunk collision only
+- **Player**: PZ-style adult proportions, pivot-based walk/run animation (arms from shoulders, legs from hips)
+- **Movement**: Acceleration/deceleration physics, walk (~8 km/h) and sprint (~16 km/h)
+- **Occlusion**: Buildings/trees/fences fade to near-transparent when blocking camera→player view
+- **Collision**: Data-driven system — circle colliders for trees/fences, box for buildings/crates
+- **Terrain**: InstancedMesh rendering for performance (~15 draw calls instead of 37k)
+- **Shadows**: PCFSoftShadowMap with light following player
+- **Loading screen**: Logo, progress bar, name input (saved to localStorage), Play button
+- **Cache busting**: PHP `filemtime()` versioning for Cloudflare compatibility
 
 ## Development
 
