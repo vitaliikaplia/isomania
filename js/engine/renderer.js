@@ -39,6 +39,13 @@ function registerOccludable(group) {
 
   group.traverse(child => {
     if (!child.isMesh) return;
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material = child.material.map(material => material.clone());
+      } else {
+        child.material = child.material.clone();
+      }
+    }
     child.userData.occludableGroup = group;
     group.userData.occlusionMeshes.push(child);
     GAME.occlusionMeshes.push(child);
