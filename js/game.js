@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 
+//@prepros-append core/config.js
 //@prepros-append engine/renderer.js
 //@prepros-append engine/input.js
+//@prepros-append world/world-data.js
 //@prepros-append world/map.js
 //@prepros-append world/terrain.js
 //@prepros-append world/buildings.js

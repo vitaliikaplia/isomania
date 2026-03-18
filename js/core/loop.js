@@ -20,7 +20,7 @@ const loaderText = document.querySelector('.loader-text');
 const loaderFill = document.querySelector('.loader-fill');
 const loaderName = document.querySelector('.loader-name');
 const playerNameInput = document.getElementById('player-name');
-let playerName = localStorage.getItem('isomania_playerName') || '';
+let playerName = localStorage.getItem(CONFIG.ui.playerNameStorageKey) || '';
 
 function showPlayButton() {
   loaderText.style.display = 'none';
@@ -78,7 +78,7 @@ requestAnimationFrame(loop);
 loaderBtn.addEventListener('click', () => {
   if (!playerNameInput.value.trim()) return;
   playerName = playerNameInput.value.trim();
-  localStorage.setItem('isomania_playerName', playerName);
+  localStorage.setItem(CONFIG.ui.playerNameStorageKey, playerName);
   clearKeys();
   gameStarted = true;
   prev = performance.now();

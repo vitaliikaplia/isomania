@@ -1,14 +1,19 @@
 /* ── Camera ── */
 
-const camOffset = new THREE.Vector3(20, 20, 20);
+const camOffset = new THREE.Vector3(...CONFIG.camera.offset);
+const lightOffset = new THREE.Vector3(...CONFIG.camera.lightOffset);
+const camTarget = new THREE.Vector3();
+const occPlayerPos = new THREE.Vector3();
+const occDir = new THREE.Vector3();
+const occNowBlocking = new Set();
 
 function updateCamera() {
-  const target = playerGroup.position.clone();
-  cam.position.copy(target).add(camOffset);
-  cam.lookAt(target);
+  camTarget.copy(playerGroup.position);
+  cam.position.copy(camTarget).add(camOffset);
+  cam.lookAt(camTarget);
   cam.updateProjectionMatrix();
-  dirLight.position.copy(target).add(new THREE.Vector3(10, 20, 10));
-  dirLight.target.position.copy(target);
+  dirLight.position.copy(camTarget).add(lightOffset);
+  dirLight.target.position.copy(camTarget);
   dirLight.target.updateMatrixWorld();
 
   updateOcclusion();
@@ -16,10 +21,11 @@ function updateCamera() {
 
 /* ── Zoom ── */
 
-const ZOOM_MIN = 0.4, ZOOM_MAX = 10;
+const ZOOM_MIN = CONFIG.camera.zoom.min;
+const ZOOM_MAX = CONFIG.camera.zoom.max;
 renderer.domElement.addEventListener('wheel', e => {
   e.preventDefault();
-  cam.zoom *= e.deltaY > 0 ? 0.9 : 1.1;
+  cam.zoom *= e.deltaY > 0 ? CONFIG.camera.zoom.wheelStepOut : CONFIG.camera.zoom.wheelStepIn;
   cam.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, cam.zoom));
   cam.updateProjectionMatrix();
 }, { passive: false });
@@ -27,54 +33,40 @@ renderer.domElement.addEventListener('wheel', e => {
 /* ── Occlusion (PZ-style see-through) ── */
 
 const occRaycaster = new THREE.Raycaster();
-const occFadeSpeed = 6;
-const occTargetAlpha = 0.05;
+const occFadeSpeed = CONFIG.occlusion.fadeSpeed;
+const occTargetAlpha = CONFIG.occlusion.targetAlpha;
 let occFaded = new Set();
 
 function setGroupOpacity(group, alpha) {
-  group.traverse(child => {
-    if (child.isMesh && child.material) {
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      for (const mat of mats) {
-        mat.opacity = alpha;
-        mat.depthWrite = alpha > 0.9;
-      }
+  for (const child of group.userData.occlusionMeshes || []) {
+    if (!child.material) continue;
+    const mats = Array.isArray(child.material) ? child.material : [child.material];
+    for (const mat of mats) {
+      mat.opacity = alpha;
+      mat.depthWrite = alpha > 0.9;
     }
-  });
+  }
 }
 
 function updateOcclusion() {
-  const playerPos = playerGroup.position.clone();
-  playerPos.y += 0.4; // Aim at chest height
+  occPlayerPos.copy(playerGroup.position);
+  occPlayerPos.y += CONFIG.occlusion.playerHeightOffset;
 
-  // Collect all meshes from occludable groups for raycasting
-  const allMeshes = [];
-  for (const group of occludables) {
-    group.traverse(child => {
-      if (child.isMesh) allMeshes.push(child);
-    });
-  }
-
-  // Cast ray from camera to player
-  const dir = playerPos.clone().sub(cam.position).normalize();
-  const dist = cam.position.distanceTo(playerPos);
-  occRaycaster.set(cam.position, dir);
+  occDir.copy(occPlayerPos).sub(cam.position).normalize();
+  const dist = cam.position.distanceTo(occPlayerPos);
+  occRaycaster.set(cam.position, occDir);
   occRaycaster.far = dist;
 
-  const hits = occRaycaster.intersectObjects(allMeshes, false);
+  const hits = occRaycaster.intersectObjects(GAME.occlusionMeshes, false);
 
-  // Find which occludable groups are hit
-  const nowBlocking = new Set();
+  occNowBlocking.clear();
   for (const hit of hits) {
-    // Walk up to find parent occludable group
-    let obj = hit.object;
-    while (obj && !obj.userData.occludable) obj = obj.parent;
-    if (obj && obj.userData.occludable) nowBlocking.add(obj);
+    const group = hit.object.userData.occludableGroup;
+    if (group) occNowBlocking.add(group);
   }
 
-  // Fade in groups that are no longer blocking
   for (const group of occFaded) {
-    if (!nowBlocking.has(group)) {
+    if (!occNowBlocking.has(group)) {
       group.userData.occAlpha = Math.min(1, (group.userData.occAlpha || 0.2) + occFadeSpeed * 0.016);
       setGroupOpacity(group, group.userData.occAlpha);
       if (group.userData.occAlpha >= 1) {
@@ -85,8 +77,7 @@ function updateOcclusion() {
     }
   }
 
-  // Fade out groups that are blocking
-  for (const group of nowBlocking) {
+  for (const group of occNowBlocking) {
     occFaded.add(group);
     group.userData.occAlpha = Math.max(occTargetAlpha, (group.userData.occAlpha || 1) - occFadeSpeed * 0.016);
     setGroupOpacity(group, group.userData.occAlpha);

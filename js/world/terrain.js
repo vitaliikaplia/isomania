@@ -1,32 +1,34 @@
 /* ── Terrain (instanced for performance) ── */
 
-const GRASS = [0x3E6B33, 0x427239, 0x3A6430, 0x477A38, 0x3F6735];
-const ASPHALT = [0x3A3A3A, 0x383838, 0x3C3C3C, 0x353535];
-const SIDEWALK = [0xA0A090, 0x989888, 0x9C9C8C, 0xA4A494];
+const GRASS = CONFIG.terrain.grassColors;
+const ASPHALT = CONFIG.terrain.asphaltColors;
+const SIDEWALK = CONFIG.terrain.sidewalkColors;
+const TERRAIN_TILE = WORLD.tiles;
 
 const tileGeo = new THREE.BoxGeometry(1, 0.15, 1);
 const dummy = new THREE.Object3D();
 
-// Count tiles per color
 const colorBuckets = {};
 for (let r = 0; r < MH; r++) for (let c = 0; c < MW; c++) {
   const t = MAP[r][c];
-  let col, yOff = -0.075;
-  if (t === 4) {
+  let col;
+  let yOff = -0.075;
+
+  if (t === TERRAIN_TILE.road) {
     col = ASPHALT[(c + r * 3) % ASPHALT.length];
     yOff = -0.09;
-  } else if (t === 5) {
+  } else if (t === TERRAIN_TILE.sidewalk) {
     col = SIDEWALK[(c * 5 + r * 2) % SIDEWALK.length];
     yOff = -0.04;
   } else {
     col = GRASS[(c * 3 + r * 7 + c * r) % GRASS.length];
   }
+
   const key = col + '|' + yOff;
-  if (!colorBuckets[key]) colorBuckets[key] = { col: col, yOff: yOff, tiles: [] };
-  colorBuckets[key].tiles.push({ c: c, r: r });
+  if (!colorBuckets[key]) colorBuckets[key] = { col, yOff, tiles: [] };
+  colorBuckets[key].tiles.push({ c, r });
 }
 
-// Create one InstancedMesh per color
 for (const key in colorBuckets) {
   const bucket = colorBuckets[key];
   const mat = new THREE.MeshLambertMaterial({ color: bucket.col });
@@ -34,11 +36,12 @@ for (const key in colorBuckets) {
   mesh.receiveShadow = true;
 
   for (let i = 0; i < bucket.tiles.length; i++) {
-    const t = bucket.tiles[i];
-    dummy.position.set(t.c - MW / 2 + 0.5, bucket.yOff, t.r - MH / 2 + 0.5);
+    const tile = bucket.tiles[i];
+    dummy.position.set(worldXFromCol(tile.c), bucket.yOff, worldZFromRow(tile.r));
     dummy.updateMatrix();
     mesh.setMatrixAt(i, dummy.matrix);
   }
+
   mesh.instanceMatrix.needsUpdate = true;
   scene.add(mesh);
 }
@@ -47,25 +50,23 @@ for (const key in colorBuckets) {
 const markGeo = new THREE.PlaneGeometry(0.08, 0.6);
 const markMat = new THREE.MeshBasicMaterial({ color: 0xCCCC88, transparent: true, opacity: 0.6 });
 
-// Horizontal roads
 for (const row of hRoads) {
   for (let c = 0; c < MW; c += 2) {
-    if (MAP[row][c] !== 4) continue;
+    if (MAP[row][c] !== TERRAIN_TILE.road) continue;
     const mark = new THREE.Mesh(markGeo, markMat);
     mark.rotation.x = -Math.PI / 2;
     mark.rotation.z = Math.PI / 2;
-    mark.position.set(c - MW / 2 + 0.5, -0.005, (row + 0.5) - MH / 2 + 0.5);
+    mark.position.set(worldXFromCol(c), -0.005, worldZFromRow(row) + 0.5);
     scene.add(mark);
   }
 }
 
-// Vertical roads
 for (const col of vRoads) {
   for (let r = 0; r < MH; r += 2) {
-    if (MAP[r][col] !== 4) continue;
+    if (MAP[r][col] !== TERRAIN_TILE.road) continue;
     const mark = new THREE.Mesh(markGeo, markMat);
     mark.rotation.x = -Math.PI / 2;
-    mark.position.set((col + 0.5) - MW / 2 + 0.5, -0.005, r - MH / 2 + 0.5);
+    mark.position.set(worldXFromCol(col) + 0.5, -0.005, worldZFromRow(r));
     scene.add(mark);
   }
 }
@@ -75,15 +76,17 @@ const curbMat = new THREE.MeshLambertMaterial({ color: 0x888878 });
 
 for (const row of hRoads) {
   for (let c = 0; c < MW; c++) {
-    if (MAP[row][c] !== 4) continue;
-    if (row > 0 && MAP[row - 1][c] === 5) {
+    if (MAP[row][c] !== TERRAIN_TILE.road) continue;
+
+    if (row > 0 && MAP[row - 1][c] === TERRAIN_TILE.sidewalk) {
       const curb = new THREE.Mesh(new THREE.BoxGeometry(1, 0.08, 0.06), curbMat);
-      curb.position.set(c - MW / 2 + 0.5, 0.0, row - MH / 2);
+      curb.position.set(worldXFromCol(c), 0.0, row - MH / 2);
       scene.add(curb);
     }
-    if (row + 2 < MH && MAP[row + 2][c] === 5) {
+
+    if (row + 2 < MH && MAP[row + 2][c] === TERRAIN_TILE.sidewalk) {
       const curb = new THREE.Mesh(new THREE.BoxGeometry(1, 0.08, 0.06), curbMat);
-      curb.position.set(c - MW / 2 + 0.5, 0.0, row + 2 - MH / 2);
+      curb.position.set(worldXFromCol(c), 0.0, row + 2 - MH / 2);
       scene.add(curb);
     }
   }
@@ -91,15 +94,17 @@ for (const row of hRoads) {
 
 for (const col of vRoads) {
   for (let r = 0; r < MH; r++) {
-    if (MAP[r][col] !== 4) continue;
-    if (col > 0 && MAP[r][col - 1] === 5) {
+    if (MAP[r][col] !== TERRAIN_TILE.road) continue;
+
+    if (col > 0 && MAP[r][col - 1] === TERRAIN_TILE.sidewalk) {
       const curb = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1), curbMat);
-      curb.position.set(col - MW / 2, 0.0, r - MH / 2 + 0.5);
+      curb.position.set(col - MW / 2, 0.0, worldZFromRow(r));
       scene.add(curb);
     }
-    if (col + 2 < MW && MAP[r][col + 2] === 5) {
+
+    if (col + 2 < MW && MAP[r][col + 2] === TERRAIN_TILE.sidewalk) {
       const curb = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 1), curbMat);
-      curb.position.set(col + 2 - MW / 2, 0.0, r - MH / 2 + 0.5);
+      curb.position.set(col + 2 - MW / 2, 0.0, worldZFromRow(r));
       scene.add(curb);
     }
   }
@@ -111,6 +116,22 @@ const signPoleMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
 const signPoleGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6);
 const signBorderMat = new THREE.MeshLambertMaterial({ color: 0xCC2222 });
 const signInnerMat = new THREE.MeshLambertMaterial({ color: 0xFFFFFF });
+const signBackMat = new THREE.MeshLambertMaterial({ color: 0x666666 });
+const yieldOuterShape = new THREE.Shape();
+yieldOuterShape.moveTo(0, -0.18);
+yieldOuterShape.lineTo(0.16, 0.12);
+yieldOuterShape.lineTo(-0.16, 0.12);
+yieldOuterShape.lineTo(0, -0.18);
+
+const yieldInnerShape = new THREE.Shape();
+const yieldInset = 0.04;
+yieldInnerShape.moveTo(0, -0.18 + yieldInset * 1.5);
+yieldInnerShape.lineTo(0.16 - yieldInset, 0.12 - yieldInset);
+yieldInnerShape.lineTo(-0.16 + yieldInset, 0.12 - yieldInset);
+yieldInnerShape.lineTo(0, -0.18 + yieldInset * 1.5);
+
+const signOuterGeo = new THREE.ShapeGeometry(yieldOuterShape);
+const signInnerGeo = new THREE.ShapeGeometry(yieldInnerShape);
 
 function addYieldSign(x, z, facingAngle) {
   const signGroup = new THREE.Group();
@@ -120,31 +141,18 @@ function addYieldSign(x, z, facingAngle) {
   pole.castShadow = true;
   signGroup.add(pole);
 
-  const triOuter = new THREE.Shape();
-  triOuter.moveTo(0, -0.18);
-  triOuter.lineTo(0.16, 0.12);
-  triOuter.lineTo(-0.16, 0.12);
-  triOuter.lineTo(0, -0.18);
-
-  const triInner = new THREE.Shape();
-  const inset = 0.04;
-  triInner.moveTo(0, -0.18 + inset * 1.5);
-  triInner.lineTo(0.16 - inset, 0.12 - inset);
-  triInner.lineTo(-0.16 + inset, 0.12 - inset);
-  triInner.lineTo(0, -0.18 + inset * 1.5);
-
-  const signOuter = new THREE.Mesh(new THREE.ShapeGeometry(triOuter), signBorderMat);
+  const signOuter = new THREE.Mesh(signOuterGeo, signBorderMat);
   signOuter.position.set(x, 1.15, z);
   signOuter.rotation.y = facingAngle;
   signGroup.add(signOuter);
 
-  const signInner = new THREE.Mesh(new THREE.ShapeGeometry(triInner), signInnerMat);
+  const signInner = new THREE.Mesh(signInnerGeo, signInnerMat);
   signInner.position.set(x, 1.15, z);
   signInner.rotation.y = facingAngle;
   signInner.translateZ(0.002);
   signGroup.add(signInner);
 
-  const signBack = new THREE.Mesh(new THREE.ShapeGeometry(triOuter), new THREE.MeshLambertMaterial({ color: 0x666666 }));
+  const signBack = new THREE.Mesh(signOuterGeo, signBackMat);
   signBack.position.set(x, 1.15, z);
   signBack.rotation.y = facingAngle + Math.PI;
   signBack.translateZ(0.002);

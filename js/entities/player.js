@@ -2,7 +2,7 @@
 /* PZ-style with pivot groups for proper limb rotation */
 
 const playerGroup = new THREE.Group();
-const playerScale = 0.55;
+const playerScale = CONFIG.player.scale;
 
 // ── Upper body group (bobs up/down during walk) ──
 const upperBody = new THREE.Group();

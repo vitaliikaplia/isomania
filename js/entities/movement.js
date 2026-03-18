@@ -1,22 +1,21 @@
 /* ── Player Movement & Animation ── */
 
-// Game-feel speeds (~1.5x real life for better gameplay)
-// Walk ~7.5km/h = 0.84 u/s, Run ~15km/h = 1.68 u/s
-const WALK_SPEED = 1.3;
-const RUN_SPEED = 2.6;
-const ACCEL = 3;
-const DECEL = 4;
+const MOVE_CFG = CONFIG.player.movement;
+const ANIM_CFG = CONFIG.player.animation;
+const WALK_SPEED = MOVE_CFG.walkSpeed;
+const RUN_SPEED = MOVE_CFG.runSpeed;
+const ACCEL = MOVE_CFG.accel;
+const DECEL = MOVE_CFG.decel;
 
 const pl = {
-  x: 96, y: 96, angle: 0,
+  x: CONFIG.player.spawn.x, y: CONFIG.player.spawn.y, angle: 0,
   walkTime: 0, speed: 0, targetSpeed: 0,
   moving: false, running: false
 };
 
-// Animation params: walk vs run
 const ANIM = {
-  walk: { legAmp: 0.5, armAmp: 0.35, bob: 0.03, freq: 7, leanFwd: 0 },
-  run:  { legAmp: 0.75, armAmp: 0.55, bob: 0.06, freq: 11, leanFwd: 0.08 }
+  walk: ANIM_CFG.walk,
+  run: ANIM_CFG.run
 };
 
 function updatePlayerPos() {
@@ -45,7 +44,7 @@ function update(dt) {
     pl.speed = lerpTo(pl.speed, pl.targetSpeed, ACCEL, dt);
   } else {
     pl.speed = lerpTo(pl.speed, 0, DECEL, dt);
-    if (pl.speed < 0.05) pl.speed = 0;
+    if (pl.speed < MOVE_CFG.minSpeed) pl.speed = 0;
   }
 
   // ── Movement ──
@@ -63,50 +62,41 @@ function update(dt) {
     let diff = targetAngle - pl.angle;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
-    pl.angle += diff * Math.min(1, 10 * dt);
+    pl.angle += diff * Math.min(1, MOVE_CFG.turnSpeed * dt);
   }
 
-  // ── Animation ──
-  const speedRatio = pl.speed / RUN_SPEED; // 0..1
-  const isRunAnim = pl.speed > WALK_SPEED * 1.2;
+  const isRunAnim = pl.speed > WALK_SPEED * ANIM_CFG.runThreshold;
   const a = isRunAnim ? ANIM.run : ANIM.walk;
 
-  // Blend animation intensity by speed
   const intensity = Math.min(1, pl.speed / WALK_SPEED);
 
-  if (pl.speed > 0.05) {
+  if (pl.speed > MOVE_CFG.minSpeed) {
     pl.walkTime += dt * a.freq * (pl.speed / (isRunAnim ? RUN_SPEED : WALK_SPEED));
   }
 
   const phase = pl.walkTime;
   const sinP = Math.sin(phase);
-  const cosP = Math.cos(phase);
 
-  // Legs — pivot rotation from hip (X axis = forward/back swing)
   const legSwing = sinP * a.legAmp * intensity;
   legPivotL.rotation.x = legSwing;
   legPivotR.rotation.x = -legSwing;
 
-  // Arms — opposite to legs, pivot from shoulder
   const armSwing = sinP * a.armAmp * intensity;
   armPivotL.rotation.x = -armSwing;
   armPivotR.rotation.x = armSwing;
 
-  // No vertical bob — keep body steady
-  upperBody.position.y = 0.46;
-  headGroup.position.y = 0.62;
+  upperBody.position.y = ANIM_CFG.upperBodyY;
+  headGroup.position.y = ANIM_CFG.headY;
 
-  // Forward lean when running
   const leanTarget = isRunAnim ? a.leanFwd * intensity : 0;
-  upperBody.rotation.x = lerpTo(upperBody.rotation.x, leanTarget, 6, dt);
+  upperBody.rotation.x = lerpTo(upperBody.rotation.x, leanTarget, ANIM_CFG.bodyReturnRate, dt);
 
-  // ── Idle: smoothly return to neutral ──
-  if (pl.speed < 0.05) {
-    legPivotL.rotation.x = lerpTo(legPivotL.rotation.x, 0, 8, dt);
-    legPivotR.rotation.x = lerpTo(legPivotR.rotation.x, 0, 8, dt);
-    armPivotL.rotation.x = lerpTo(armPivotL.rotation.x, 0, 8, dt);
-    armPivotR.rotation.x = lerpTo(armPivotR.rotation.x, 0, 8, dt);
-    upperBody.rotation.x = lerpTo(upperBody.rotation.x, 0, 6, dt);
+  if (pl.speed < MOVE_CFG.minSpeed) {
+    legPivotL.rotation.x = lerpTo(legPivotL.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
+    legPivotR.rotation.x = lerpTo(legPivotR.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
+    armPivotL.rotation.x = lerpTo(armPivotL.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
+    armPivotR.rotation.x = lerpTo(armPivotR.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
+    upperBody.rotation.x = lerpTo(upperBody.rotation.x, 0, ANIM_CFG.bodyReturnRate, dt);
   }
 
   updatePlayerPos();
