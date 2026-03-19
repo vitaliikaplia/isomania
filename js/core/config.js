@@ -159,6 +159,29 @@ const CONFIG = {
   },
   ui: {
     playerNameStorageKey: 'isomania_playerName',
+    startScreen: {
+      musicPath: 'audio/screen/start.mp3',
+      animation: {
+        jumpsPerMinute: 46,
+        baseYaw: 0.5,
+        yawSwing: 0.16,
+        hopHeight: 0.11,
+        bodyBob: 0.07,
+        headBob: 0.032,
+        pointerBodyYaw: 0.5,
+        pointerHeadYaw: 0.38,
+        pointerPitch: 0.14,
+        pointerCameraX: 0.1,
+        pointerCameraY: 0.05,
+        pointerFollow: 3.2,
+      },
+      appearance: {
+        hair: [0x2c1b13, 0x5b3a22, 0x8c6239, 0xb98a5b, 0x4b4b52, 0xc78d63, 0x9dff00],
+        shirt: [0x5a7044, 0x4d5d79, 0x8a5d3b, 0x7a3646, 0x3e6d68, 0x8a8f45, 0xb100ff],
+        pants: [0x3a4a5c, 0x4d4139, 0x55624b, 0x2f3f54, 0x5c4a66, 0x4f5058, 0xffea00],
+        shoes: [0x2a2018, 0x3b3127, 0x4f3928, 0x232833, 0x5a5a5a, 0x1b1b1b],
+      },
+    },
   },
   audio: {
     enabled: true,

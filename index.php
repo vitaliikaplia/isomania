@@ -35,6 +35,9 @@ $ogImage = $siteUrl . 'screenshot.png';
   <meta name="twitter:description" content="<?= htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8') ?>">
   <meta name="twitter:image" content="<?= htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') ?>">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.ico?v=<?= filemtime('favicon.ico') ?>" sizes="48x48">
   <link rel="icon" href="favicon.svg?v=<?= filemtime('favicon.svg') ?>" type="image/svg+xml">
   <link rel="apple-touch-icon" href="favicon.png?v=<?= filemtime('favicon.png') ?>">
@@ -49,15 +52,73 @@ $ogImage = $siteUrl . 'screenshot.png';
 </head>
 <body>
   <div id="loader">
-    <div class="loader-content">
-      <img src="favicon.svg?v=<?= filemtime('favicon.svg') ?>" class="loader-logo" alt="Isomania">
-      <div class="loader-title">ISOMANIA</div>
-      <div class="loader-bar"><div class="loader-fill"></div></div>
-      <div class="loader-text">Завантаження...</div>
-      <div class="loader-name" style="display:none">
-        <input type="text" id="player-name" placeholder="Ваше ім’я" maxlength="20" autocomplete="off">
+    <div class="loader-shell">
+      <div class="loader-panel loader-panel-form">
+        <div class="loader-brand">
+          <img src="favicon.svg?v=<?= filemtime('favicon.svg') ?>" class="loader-logo" alt="Isomania">
+          <div class="loader-brand-copy">
+            <div class="loader-title">ISOMANIA</div>
+            <div class="loader-subtitle">Ізометрична survival-пригода з атмосферою тихого занепаду.</div>
+          </div>
+        </div>
+
+        <div class="loader-copy">
+          <div class="loader-kicker">Вхід у сесію</div>
+          <h1>Створи свого персонажа і заходь у світ.</h1>
+          <p>Обери зовнішність, введи ім’я і починай дослідження міських кварталів, дворів, доріг та закритих подвір’їв.</p>
+        </div>
+
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+        <div class="loader-text">Завантаження...</div>
+
+        <div class="loader-name" style="display:none">
+          <label class="loader-field">
+            <span>Ім’я персонажа</span>
+            <input type="text" id="player-name" placeholder="Ваше ім’я" maxlength="20" autocomplete="off">
+          </label>
+        </div>
+
+        <button id="loader-play" style="display:none">Увійти в гру</button>
       </div>
-      <button id="loader-play" style="display:none">Увійти в гру</button>
+
+      <div class="loader-panel loader-panel-preview">
+        <div id="loader-preview-stage"></div>
+
+        <div class="style-controls">
+          <div class="style-row">
+            <span>Волосся</span>
+            <div class="style-row-controls">
+              <button type="button" data-style-key="hair" data-style-dir="-1" aria-label="Попередній колір волосся">‹</button>
+              <i data-style-swatch="hair"></i>
+              <button type="button" data-style-key="hair" data-style-dir="1" aria-label="Наступний колір волосся">›</button>
+            </div>
+          </div>
+          <div class="style-row">
+            <span>Футболка</span>
+            <div class="style-row-controls">
+              <button type="button" data-style-key="shirt" data-style-dir="-1" aria-label="Попередній колір футболки">‹</button>
+              <i data-style-swatch="shirt"></i>
+              <button type="button" data-style-key="shirt" data-style-dir="1" aria-label="Наступний колір футболки">›</button>
+            </div>
+          </div>
+          <div class="style-row">
+            <span>Штани</span>
+            <div class="style-row-controls">
+              <button type="button" data-style-key="pants" data-style-dir="-1" aria-label="Попередній колір штанів">‹</button>
+              <i data-style-swatch="pants"></i>
+              <button type="button" data-style-key="pants" data-style-dir="1" aria-label="Наступний колір штанів">›</button>
+            </div>
+          </div>
+          <div class="style-row">
+            <span>Взуття</span>
+            <div class="style-row-controls">
+              <button type="button" data-style-key="shoes" data-style-dir="-1" aria-label="Попередній колір взуття">‹</button>
+              <i data-style-swatch="shoes"></i>
+              <button type="button" data-style-key="shoes" data-style-dir="1" aria-label="Наступний колір взуття">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <div id="wrap">

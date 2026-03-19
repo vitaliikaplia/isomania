@@ -9,6 +9,7 @@ function onResize() {
   cam.bottom = -frustum;
   cam.updateProjectionMatrix();
   renderer.setSize(w, h);
+  if (typeof resizeStartScreenPreview === 'function') resizeStartScreenPreview();
 }
 window.addEventListener('resize', onResize);
 
@@ -45,7 +46,7 @@ function showPlayButton() {
   loaderFill.style.width = '100%';
   loaderFill.style.marginLeft = '0';
   loaderName.style.display = 'block';
-  loaderBtn.style.display = 'block';
+  loaderBtn.style.display = 'inline-flex';
   if (playerName) {
     playerNameInput.value = playerName;
     loaderBtn.disabled = false;
@@ -80,6 +81,7 @@ function loop(ts) {
     update(dt);
     updateAudio(dt);
   }
+  if (typeof updateStartScreen === 'function') updateStartScreen(dt);
   updateCamera();
   renderer.render(scene, cam);
   updateHud();
@@ -87,6 +89,7 @@ function loop(ts) {
 }
 
 // Scene is ready — show play button
+if (typeof initStartScreen === 'function') initStartScreen();
 showPlayButton();
 
 // Render scene in background while waiting
@@ -98,6 +101,7 @@ loaderBtn.addEventListener('click', () => {
   playerName = playerNameInput.value.trim();
   localStorage.setItem(CONFIG.ui.playerNameStorageKey, playerName);
   notifyGameJoin(playerName);
+  if (typeof stopStartScreenMusic === 'function') stopStartScreenMusic();
   unlockAudio().finally(() => {
     resetFootstepTracking();
   });

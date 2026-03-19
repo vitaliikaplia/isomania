@@ -12,5 +12,6 @@ import * as THREE from 'three';
 //@prepros-append entities/player.js
 //@prepros-append entities/movement.js
 //@prepros-append engine/camera.js
+//@prepros-append ui/start-screen.js
 //@prepros-append ui/hud.js
 //@prepros-append core/loop.js
