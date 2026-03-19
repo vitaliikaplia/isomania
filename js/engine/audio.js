@@ -18,6 +18,9 @@ const AUDIO = {
   ambientRetryTimer: null,
   footstepBuffers: [],
   footstepLoadPromise: null,
+  voiceBuffers: {},
+  voiceLoadPromise: null,
+  voiceSource: null,
   footstepDistance: 0,
   lastPlayerX: CONFIG.player.spawn.x,
   lastPlayerY: CONFIG.player.spawn.y,
@@ -155,6 +158,29 @@ function preloadFootsteps() {
   });
 
   return AUDIO.footstepLoadPromise;
+}
+
+function preloadVoiceClips() {
+  if (!AUDIO.enabled || AUDIO.voiceLoadPromise) return AUDIO.voiceLoadPromise;
+
+  const voiceClips = AUDIO_CFG.voice.clips || {};
+  AUDIO.voiceLoadPromise = Promise.all(
+    Object.entries(voiceClips).map(async ([clipId, file]) => {
+      try {
+        const response = await fetch(`${AUDIO_CFG.voice.basePath}/${file}`);
+        if (!response.ok) return [clipId, null];
+        const buffer = await response.arrayBuffer();
+        return [clipId, await decodeAudioBuffer(buffer)];
+      } catch (error) {
+        return [clipId, null];
+      }
+    })
+  ).then(entries => {
+    AUDIO.voiceBuffers = Object.fromEntries(entries.filter(([, buffer]) => !!buffer));
+    return AUDIO.voiceBuffers;
+  });
+
+  return AUDIO.voiceLoadPromise;
 }
 
 function getNextAmbientTrackIndex() {
@@ -295,7 +321,7 @@ function unlockAudio() {
   AUDIO.unlocked = true;
 
   return context.resume()
-    .then(() => Promise.all([preloadAmbient(), preloadFootsteps()]))
+    .then(() => Promise.all([preloadAmbient(), preloadFootsteps(), preloadVoiceClips()]))
     .then(([ambientBuffers]) => {
       if (!AUDIO.ambientStarted && ambientBuffers && ambientBuffers.length) {
         startAmbientLoop();
@@ -360,6 +386,49 @@ function playRandomFootstep(stepProfile) {
 
   source.connect(gain);
   gain.connect(AUDIO.sfxGain);
+  source.start(0);
+}
+
+function stopVoiceLine() {
+  if (!AUDIO.voiceSource) return;
+  try {
+    AUDIO.voiceSource.stop();
+  } catch (error) {
+    // Ignore stop errors for finished voice lines.
+  }
+  AUDIO.voiceSource.disconnect();
+  AUDIO.voiceSource = null;
+}
+
+function playVoiceLine(clipId) {
+  if (!AUDIO.enabled || !AUDIO.unlocked) return;
+
+  const context = ensureAudioContext();
+  if (!context) return;
+
+  const buffer = AUDIO.voiceBuffers[clipId];
+  if (!buffer) {
+    preloadVoiceClips().then(() => playVoiceLine(clipId));
+    return;
+  }
+
+  stopVoiceLine();
+
+  const source = context.createBufferSource();
+  const gain = context.createGain();
+  gain.gain.value = AUDIO_CFG.voice.volume[clipId] || 1;
+
+  source.buffer = buffer;
+  source.connect(gain);
+  gain.connect(AUDIO.sfxGain);
+  source.onended = () => {
+    if (AUDIO.voiceSource === source) {
+      AUDIO.voiceSource.disconnect();
+      AUDIO.voiceSource = null;
+    }
+  };
+
+  AUDIO.voiceSource = source;
   source.start(0);
 }
 

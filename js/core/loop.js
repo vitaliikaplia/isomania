@@ -83,6 +83,7 @@ function loop(ts) {
   }
   if (typeof updateStartScreen === 'function') updateStartScreen(dt);
   updateCamera();
+  if (typeof updateContextMenu === 'function') updateContextMenu();
   renderer.render(scene, cam);
   updateHud();
   requestAnimationFrame(loop);

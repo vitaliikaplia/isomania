@@ -124,7 +124,7 @@ $ogImage = $siteUrl . 'screenshot.png?v=' . filemtime('screenshot.png');
   <div id="wrap">
     <button id="btn-fs">&#x26F6; На весь екран</button>
     <div id="hud"></div>
-    <div id="hint">WASD / ← ↑ → ↓ &nbsp; Коліщатко миші для масштабу</div>
+    <div id="hint">WASD / ← ↑ → ↓ &nbsp; Q для дій &nbsp; Коліщатко миші для масштабу</div>
   </div>
   <script>
     window.ISOMANIA_BOOTSTRAP = {
