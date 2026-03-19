@@ -10,16 +10,24 @@ const DECEL = MOVE_CFG.decel;
 const pl = {
   x: CONFIG.player.spawn.x, y: CONFIG.player.spawn.y, angle: 0,
   walkTime: 0, speed: 0, targetSpeed: 0,
-  moving: false, running: false
+  moving: false, running: false,
+  crouching: false,
+  crouchBlend: 0,
+  groundY: 0,
 };
 
 const ANIM = {
   walk: ANIM_CFG.walk,
   run: ANIM_CFG.run
 };
+let crouchTogglePressed = false;
 
 function updatePlayerPos() {
-  playerGroup.position.set(pl.x - MW / 2 + 0.5, 0, pl.y - MH / 2 + 0.5);
+  playerGroup.position.set(
+    pl.x - MW / 2 + 0.5,
+    CONFIG.player.groundOffset + pl.groundY,
+    pl.y - MH / 2 + 0.5
+  );
   playerGroup.rotation.y = pl.angle;
 }
 updatePlayerPos();
@@ -28,19 +36,38 @@ function lerpTo(current, target, rate, dt) {
   return current + (target - current) * Math.min(1, rate * dt);
 }
 
+function clamp01(value) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function gaitLift(phase) {
+  return clamp01((-Math.sin(phase) + 1) * 0.5);
+}
+
+function gaitDrive(phase) {
+  return Math.sin(phase);
+}
+
 function update(dt) {
+  if (keys['KeyC'] && !crouchTogglePressed) {
+    pl.crouching = !pl.crouching;
+  }
+  crouchTogglePressed = !!keys['KeyC'];
+
   let dx = 0, dz = 0;
   if (keys['ArrowLeft']  || keys['KeyA']) { dx--; dz++; }
   if (keys['ArrowRight'] || keys['KeyD']) { dx++; dz--; }
   if (keys['ArrowUp']    || keys['KeyW']) { dx--; dz--; }
   if (keys['ArrowDown']  || keys['KeyS']) { dx++; dz++; }
 
-  pl.running = !!(keys['ShiftLeft'] || keys['ShiftRight']);
+  pl.running = !pl.crouching && !!(keys['ShiftLeft'] || keys['ShiftRight']);
   pl.moving = dx !== 0 || dz !== 0;
 
   // ── Speed with acceleration/deceleration ──
   if (pl.moving) {
-    pl.targetSpeed = pl.running ? RUN_SPEED : WALK_SPEED;
+    pl.targetSpeed = pl.crouching
+      ? MOVE_CFG.crouchSpeed
+      : (pl.running ? RUN_SPEED : WALK_SPEED);
     pl.speed = lerpTo(pl.speed, pl.targetSpeed, ACCEL, dt);
   } else {
     pl.speed = lerpTo(pl.speed, 0, DECEL, dt);
@@ -65,10 +92,19 @@ function update(dt) {
     pl.angle += diff * Math.min(1, MOVE_CFG.turnSpeed * dt);
   }
 
+  pl.crouchBlend = lerpTo(
+    pl.crouchBlend,
+    pl.crouching ? 1 : 0,
+    ANIM_CFG.crouch.blendRate,
+    dt
+  );
+
   const isRunAnim = pl.speed > WALK_SPEED * ANIM_CFG.runThreshold;
   const a = isRunAnim ? ANIM.run : ANIM.walk;
 
   const intensity = Math.min(1, pl.speed / WALK_SPEED);
+  const movementHeadingX = pl.moving ? dx : 0;
+  const movementHeadingZ = pl.moving ? dz : 0;
 
   if (pl.speed > MOVE_CFG.minSpeed) {
     pl.walkTime += dt * a.freq * (pl.speed / (isRunAnim ? RUN_SPEED : WALK_SPEED));
@@ -76,28 +112,123 @@ function update(dt) {
 
   const phase = pl.walkTime;
   const sinP = Math.sin(phase);
+  const sinDouble = Math.sin(phase * 2);
+  const strafeAmount = Math.max(-1, Math.min(1, movementHeadingX * 1.8));
+  const leftDrive = gaitDrive(phase);
+  const rightDrive = gaitDrive(phase + Math.PI);
+  const leftLift = gaitLift(phase);
+  const rightLift = gaitLift(phase + Math.PI);
+  const strideBlend = 0.72 + pl.crouchBlend * 0.18;
 
-  const legSwing = sinP * a.legAmp * intensity;
-  legPivotL.rotation.x = legSwing;
-  legPivotR.rotation.x = -legSwing;
+  const crouchLegBend = ANIM_CFG.crouch.legBend * pl.crouchBlend;
+  const crouchKneeBend = ANIM_CFG.crouch.kneeBend * pl.crouchBlend;
+  const crouchAnkleBend = ANIM_CFG.crouch.ankleBend * pl.crouchBlend;
+  const crouchArmForward = ANIM_CFG.crouch.armForward * pl.crouchBlend;
+  const crouchLean = ANIM_CFG.crouch.torsoLean * pl.crouchBlend;
 
-  const armSwing = sinP * a.armAmp * intensity;
-  armPivotL.rotation.x = -armSwing;
-  armPivotR.rotation.x = armSwing;
+  const leftStride = leftDrive * a.legAmp * intensity * strideBlend;
+  const rightStride = rightDrive * a.legAmp * intensity * strideBlend;
+  const leftStepSettle = Math.max(0, leftDrive) * a.stepSnap * intensity;
+  const rightStepSettle = Math.max(0, rightDrive) * a.stepSnap * intensity;
 
-  upperBody.position.y = ANIM_CFG.upperBodyY;
-  headGroup.position.y = ANIM_CFG.headY;
+  legPivotL.rotation.x = leftStride + leftStepSettle + crouchLegBend;
+  legPivotR.rotation.x = rightStride + rightStepSettle + crouchLegBend;
+
+  const armSwing = leftDrive * a.armAmp * intensity;
+  armPivotL.rotation.x = -armSwing + crouchArmForward;
+  armPivotR.rotation.x = armSwing + crouchArmForward;
+
+  kneePivotL.rotation.x = leftLift * a.kneeAmp * intensity + crouchKneeBend;
+  kneePivotR.rotation.x = rightLift * a.kneeAmp * intensity + crouchKneeBend;
+
+  const leftFootLevel = -(legPivotL.rotation.x + kneePivotL.rotation.x) * a.ankleLevel;
+  const rightFootLevel = -(legPivotR.rotation.x + kneePivotR.rotation.x) * a.ankleLevel;
+  anklePivotL.rotation.x = leftFootLevel + (leftLift * a.ankleLift * intensity) + crouchAnkleBend;
+  anklePivotR.rotation.x = rightFootLevel + (rightLift * a.ankleLift * intensity) + crouchAnkleBend;
+
+  armPivotL.rotation.z = 0.08 * intensity + strafeAmount * 0.04 + pl.crouchBlend * 0.05;
+  armPivotR.rotation.z = -0.08 * intensity + strafeAmount * 0.04 - pl.crouchBlend * 0.05;
+
+  upperBody.position.y =
+    ANIM_CFG.upperBodyY +
+    (ANIM_CFG.crouch.upperBodyY - ANIM_CFG.upperBodyY) * pl.crouchBlend +
+    Math.abs(sinP) * a.bob * intensity;
+  headGroup.position.y =
+    ANIM_CFG.headY +
+    (ANIM_CFG.crouch.headY - ANIM_CFG.headY) * pl.crouchBlend +
+    Math.abs(sinP) * a.headBob * intensity;
 
   const leanTarget = isRunAnim ? a.leanFwd * intensity : 0;
-  upperBody.rotation.x = lerpTo(upperBody.rotation.x, leanTarget, ANIM_CFG.bodyReturnRate, dt);
+  upperBody.rotation.x = lerpTo(
+    upperBody.rotation.x,
+    leanTarget + crouchLean,
+    ANIM_CFG.bodyReturnRate,
+    dt
+  );
+
+  upperBody.rotation.y = lerpTo(
+    upperBody.rotation.y,
+    (-leftDrive * a.bodyYaw * intensity) + (pl.crouchBlend * ANIM_CFG.crouch.bodyYaw * strafeAmount),
+    ANIM_CFG.bodyReturnRate,
+    dt
+  );
+  upperBody.rotation.z = lerpTo(
+    upperBody.rotation.z,
+    (sinDouble * a.bodyRoll * intensity * 0.75) + (strafeAmount * a.strafeSway * intensity) + (pl.crouchBlend * ANIM_CFG.crouch.bodyRoll * strafeAmount),
+    ANIM_CFG.bodyReturnRate,
+    dt
+  );
+
+  headGroup.rotation.x = lerpTo(
+    headGroup.rotation.x,
+    (-Math.abs(sinP) * a.headBob * 0.45 * intensity) + (pl.crouchBlend * ANIM_CFG.crouch.headPitch),
+    ANIM_CFG.bodyReturnRate,
+    dt
+  );
+  headGroup.rotation.z = lerpTo(
+    headGroup.rotation.z,
+    (sinDouble * a.bodyRoll * 0.5 * intensity) + (pl.crouchBlend * ANIM_CFG.crouch.headRoll * strafeAmount),
+    ANIM_CFG.bodyReturnRate,
+    dt
+  );
+
+  legPivotL.position.z = -leftDrive * a.hipSwing * intensity;
+  legPivotR.position.z = -rightDrive * a.hipSwing * intensity;
+  legPivotL.position.x = -0.08 + (rightLift - leftLift) * 0.012 * intensity;
+  legPivotR.position.x = 0.08 + (leftLift - rightLift) * 0.012 * intensity;
 
   if (pl.speed < MOVE_CFG.minSpeed) {
-    legPivotL.rotation.x = lerpTo(legPivotL.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
-    legPivotR.rotation.x = lerpTo(legPivotR.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
-    armPivotL.rotation.x = lerpTo(armPivotL.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
-    armPivotR.rotation.x = lerpTo(armPivotR.rotation.x, 0, ANIM_CFG.idleReturnRate, dt);
-    upperBody.rotation.x = lerpTo(upperBody.rotation.x, 0, ANIM_CFG.bodyReturnRate, dt);
+    legPivotL.rotation.x = lerpTo(legPivotL.rotation.x, crouchLegBend, ANIM_CFG.idleReturnRate, dt);
+    legPivotR.rotation.x = lerpTo(legPivotR.rotation.x, crouchLegBend, ANIM_CFG.idleReturnRate, dt);
+    kneePivotL.rotation.x = lerpTo(kneePivotL.rotation.x, crouchKneeBend, ANIM_CFG.idleReturnRate, dt);
+    kneePivotR.rotation.x = lerpTo(kneePivotR.rotation.x, crouchKneeBend, ANIM_CFG.idleReturnRate, dt);
+    anklePivotL.rotation.x = lerpTo(
+      anklePivotL.rotation.x,
+      (-(crouchLegBend + crouchKneeBend) * ANIM_CFG.walk.ankleLevel) + crouchAnkleBend,
+      ANIM_CFG.idleReturnRate,
+      dt
+    );
+    anklePivotR.rotation.x = lerpTo(
+      anklePivotR.rotation.x,
+      (-(crouchLegBend + crouchKneeBend) * ANIM_CFG.walk.ankleLevel) + crouchAnkleBend,
+      ANIM_CFG.idleReturnRate,
+      dt
+    );
+    armPivotL.rotation.x = lerpTo(armPivotL.rotation.x, crouchArmForward, ANIM_CFG.idleReturnRate, dt);
+    armPivotR.rotation.x = lerpTo(armPivotR.rotation.x, crouchArmForward, ANIM_CFG.idleReturnRate, dt);
+    armPivotL.rotation.z = lerpTo(armPivotL.rotation.z, pl.crouchBlend * 0.05, ANIM_CFG.idleReturnRate, dt);
+    armPivotR.rotation.z = lerpTo(armPivotR.rotation.z, -pl.crouchBlend * 0.05, ANIM_CFG.idleReturnRate, dt);
+    upperBody.rotation.x = lerpTo(upperBody.rotation.x, crouchLean, ANIM_CFG.bodyReturnRate, dt);
+    upperBody.rotation.y = lerpTo(upperBody.rotation.y, 0, ANIM_CFG.bodyReturnRate, dt);
+    upperBody.rotation.z = lerpTo(upperBody.rotation.z, 0, ANIM_CFG.bodyReturnRate, dt);
+    headGroup.rotation.x = lerpTo(headGroup.rotation.x, pl.crouchBlend * ANIM_CFG.crouch.headPitch, ANIM_CFG.bodyReturnRate, dt);
+    headGroup.rotation.z = lerpTo(headGroup.rotation.z, 0, ANIM_CFG.bodyReturnRate, dt);
+    legPivotL.position.z = lerpTo(legPivotL.position.z, 0, ANIM_CFG.idleReturnRate, dt);
+    legPivotR.position.z = lerpTo(legPivotR.position.z, 0, ANIM_CFG.idleReturnRate, dt);
+    legPivotL.position.x = lerpTo(legPivotL.position.x, -0.08, ANIM_CFG.idleReturnRate, dt);
+    legPivotR.position.x = lerpTo(legPivotR.position.x, 0.08, ANIM_CFG.idleReturnRate, dt);
   }
 
+  pl.groundY = lerpTo(pl.groundY, getGroundHeightAt(pl.x, pl.y), 14, dt);
   updatePlayerPos();
 }

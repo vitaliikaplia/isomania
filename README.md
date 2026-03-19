@@ -82,6 +82,7 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 - Fence and wicket collision based on rendered segment shape rather than coarse tile checks
 - Player name persistence through `localStorage`
 - Telegram notification when a player enters the game
+- Ambient street audio and randomized footstep playback through a dedicated audio layer
 
 ## Development Notes
 
@@ -89,3 +90,25 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 - Project files do not use local `import` / `export` between gameplay modules
 - Styling source lives in `scss/style.scss` and compiles to `css/style.min.css`
 - After changing source JS or SCSS, rebuild the generated assets through `Prepros`
+
+## Audio Assets
+
+Place generated audio files in the following directories:
+
+```text
+audio/
+├── ambient/
+│   └── street.mp3
+└── footsteps/
+    ├── step-01.wav
+    ├── step-02.wav
+    ├── step-03.wav
+    ├── step-04.wav
+    ├── step-05.wav
+    └── step-06.wav
+```
+
+Recommended export settings:
+
+- Ambient street loops: `MP3`, `44.1 kHz`, stereo, around `192 kbps`, `60–120s`
+- Footsteps: `WAV`, `44.1 kHz`, `16-bit`, preferably mono, short dry one-shots

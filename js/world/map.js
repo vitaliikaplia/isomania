@@ -17,6 +17,18 @@ function worldZFromRow(row) {
   return row - MH / 2 + 0.5;
 }
 
+function getTileCenterHeight(tile) {
+  if (tile === WORLD.tiles.road) return -0.015;
+  if (tile === WORLD.tiles.sidewalk) return 0.035;
+  return 0;
+}
+
+function getGroundHeightAt(tx, ty) {
+  const c = Math.max(0, Math.min(MW - 1, Math.round(tx)));
+  const r = Math.max(0, Math.min(MH - 1, Math.round(ty)));
+  return getTileCenterHeight(MAP[r][c]);
+}
+
 function isFenceTile(tile) {
   return tile === WORLD.tiles.fence || tile === WORLD.tiles.gate;
 }

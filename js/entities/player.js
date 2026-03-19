@@ -135,41 +135,100 @@ const legPivotL = new THREE.Group();
 legPivotL.position.set(-0.08, 0.46, 0);
 playerGroup.add(legPivotL);
 
-const legGeo = new THREE.BoxGeometry(0.13, 0.38, 0.14);
+const thighGeo = new THREE.BoxGeometry(0.13, 0.22, 0.14);
+const shinGeo = new THREE.BoxGeometry(0.12, 0.2, 0.13);
 const legMat = new THREE.MeshLambertMaterial({ color: 0x3A4A5C });
-const legL = new THREE.Mesh(legGeo, legMat);
-legL.position.y = -0.19;
-legL.castShadow = true;
-legPivotL.add(legL);
+const thighL = new THREE.Mesh(thighGeo, legMat);
+thighL.position.y = -0.11;
+thighL.castShadow = true;
+legPivotL.add(thighL);
+
+const kneePivotL = new THREE.Group();
+kneePivotL.position.y = -0.22;
+legPivotL.add(kneePivotL);
+
+const kneeCapGeo = new THREE.BoxGeometry(0.125, 0.05, 0.145);
+const kneeCapL = new THREE.Mesh(kneeCapGeo, legMat);
+kneeCapL.position.y = -0.01;
+kneeCapL.castShadow = true;
+kneePivotL.add(kneeCapL);
+
+const shinL = new THREE.Mesh(shinGeo, legMat);
+shinL.position.y = -0.12;
+shinL.castShadow = true;
+kneePivotL.add(shinL);
+
+const anklePivotL = new THREE.Group();
+anklePivotL.position.y = -0.22;
+kneePivotL.add(anklePivotL);
+
+const ankleGeo = new THREE.BoxGeometry(0.115, 0.05, 0.12);
+const ankleL = new THREE.Mesh(ankleGeo, legMat);
+ankleL.position.y = 0.015;
+ankleL.castShadow = true;
+anklePivotL.add(ankleL);
 
 const shoeGeo = new THREE.BoxGeometry(0.13, 0.08, 0.2);
 const shoeMat = new THREE.MeshLambertMaterial({ color: 0x2A2018 });
 const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
-shoeL.position.set(0, -0.4, 0.02);
+shoeL.position.set(0, -0.03, 0.03);
 shoeL.castShadow = true;
-legPivotL.add(shoeL);
+anklePivotL.add(shoeL);
+
+const soleGeo = new THREE.BoxGeometry(0.14, 0.025, 0.22);
+const soleMat = new THREE.MeshLambertMaterial({ color: 0x16120f });
+const soleL = new THREE.Mesh(soleGeo, soleMat);
+soleL.position.set(0, -0.07, 0.03);
+anklePivotL.add(soleL);
 
 // ── Right leg pivot (at hip) ──
 const legPivotR = new THREE.Group();
 legPivotR.position.set(0.08, 0.46, 0);
 playerGroup.add(legPivotR);
 
-const legR = new THREE.Mesh(legGeo, legMat);
-legR.position.y = -0.19;
-legR.castShadow = true;
-legPivotR.add(legR);
+const thighR = new THREE.Mesh(thighGeo, legMat);
+thighR.position.y = -0.11;
+thighR.castShadow = true;
+legPivotR.add(thighR);
+
+const kneePivotR = new THREE.Group();
+kneePivotR.position.y = -0.22;
+legPivotR.add(kneePivotR);
+
+const kneeCapR = new THREE.Mesh(kneeCapGeo, legMat);
+kneeCapR.position.y = -0.01;
+kneeCapR.castShadow = true;
+kneePivotR.add(kneeCapR);
+
+const shinR = new THREE.Mesh(shinGeo, legMat);
+shinR.position.y = -0.12;
+shinR.castShadow = true;
+kneePivotR.add(shinR);
+
+const anklePivotR = new THREE.Group();
+anklePivotR.position.y = -0.22;
+kneePivotR.add(anklePivotR);
+
+const ankleR = new THREE.Mesh(ankleGeo, legMat);
+ankleR.position.y = 0.015;
+ankleR.castShadow = true;
+anklePivotR.add(ankleR);
 
 const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
-shoeR.position.set(0, -0.4, 0.02);
+shoeR.position.set(0, -0.03, 0.03);
 shoeR.castShadow = true;
-legPivotR.add(shoeR);
+anklePivotR.add(shoeR);
+
+const soleR = new THREE.Mesh(soleGeo, soleMat);
+soleR.position.set(0, -0.07, 0.03);
+anklePivotR.add(soleR);
 
 // ── Shadow blob ──
 const shadowGeo = new THREE.CircleGeometry(0.18, 12);
 const shadowMeshMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 });
 const shadowMesh = new THREE.Mesh(shadowGeo, shadowMeshMat);
 shadowMesh.rotation.x = -Math.PI / 2;
-shadowMesh.position.y = 0.01;
+shadowMesh.position.y = CONFIG.player.shadowLocalY;
 playerGroup.add(shadowMesh);
 
 // Apply scale

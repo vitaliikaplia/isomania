@@ -78,6 +78,7 @@ function loop(ts) {
   prev = ts;
   if (gameStarted) {
     update(dt);
+    updateAudio(dt);
   }
   updateCamera();
   renderer.render(scene, cam);
@@ -97,6 +98,9 @@ loaderBtn.addEventListener('click', () => {
   playerName = playerNameInput.value.trim();
   localStorage.setItem(CONFIG.ui.playerNameStorageKey, playerName);
   notifyGameJoin(playerName);
+  unlockAudio().finally(() => {
+    resetFootstepTracking();
+  });
   clearKeys();
   gameStarted = true;
   prev = performance.now();
