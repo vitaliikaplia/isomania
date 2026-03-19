@@ -18,9 +18,11 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 
 - Procedurally generated `192x192` world with roads, sidewalks, houses, fences, gates, trees, and small structures
 - Isometric rendering with `THREE.OrthographicCamera`
-- Player movement with acceleration, sprinting, smooth facing, and pivot-based animation
+- Player movement with acceleration, sprinting, crouching, adaptive ground height, and pivot-based animation
 - Occlusion system for buildings, trees, and fences between camera and player
 - Segment-based fence and gate collision to prevent clipping through barriers
+- Interactive split-screen start experience with live character preview and appearance controls
+- Ambient soundtrack, start-screen music, and randomized footstep playback
 - PHP-powered session bootstrap, cache busting, and Telegram login notifications
 - GeoIP-enriched backend session info for Telegram alerts
 
@@ -30,6 +32,7 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 | ----- | ------ |
 | `WASD` / Arrow keys | Move |
 | `Shift` + move | Sprint |
+| `C` | Toggle crouch / stealth walk |
 | Mouse wheel | Zoom in / out |
 
 ## Tech Stack
@@ -57,6 +60,7 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
     │   ├── config.js          # Shared runtime configuration
     │   └── loop.js            # Loader flow and main loop
     ├── engine/
+    │   ├── audio.js           # Ambient, footsteps, and start-screen audio logic
     │   ├── renderer.js        # Scene, camera, renderer, lights, occlusion registry
     │   ├── input.js           # Input handling
     │   └── camera.js          # Camera follow, zoom, occlusion updates
@@ -67,9 +71,10 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
     │   ├── buildings.js       # Buildings, fences, gates, small structures
     │   └── trees.js           # Tree rendering
     ├── entities/
-    │   ├── player.js          # Player mesh
+    │   ├── player.js          # Player rig, materials, and appearance palette hooks
     │   └── movement.js        # Player movement and animation
     └── ui/
+        ├── start-screen.js    # Loader preview, character customization, intro music
         └── hud.js             # HUD and fullscreen toggle
 ```
 
@@ -81,8 +86,11 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 - Data-driven collision for solid world objects
 - Fence and wicket collision based on rendered segment shape rather than coarse tile checks
 - Player name persistence through `localStorage`
+- Start-screen character customization for hair, shirt, pants, and shoes
+- Interactive preview character that reacts to cursor movement on the intro screen
 - Telegram notification when a player enters the game
 - Ambient street audio and randomized footstep playback through a dedicated audio layer
+- Separate intro music loop for the start screen
 
 ## Development Notes
 
@@ -106,9 +114,12 @@ audio/
     ├── step-04.wav
     ├── step-05.wav
     └── step-06.wav
+└── screen/
+    └── start.mp3
 ```
 
 Recommended export settings:
 
 - Ambient street loops: `MP3`, `44.1 kHz`, stereo, around `192 kbps`, `60–120s`
 - Footsteps: `WAV`, `44.1 kHz`, `16-bit`, preferably mono, short dry one-shots
+- Start screen music: `MP3`, `44.1 kHz`, stereo
