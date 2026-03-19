@@ -17,6 +17,7 @@ $ogImage = $siteUrl . 'screenshot.png?v=' . filemtime('screenshot.png');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
   <meta name="description" content="<?= htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8') ?>">
+  <meta name="theme-color" content="#081117">
   <link rel="canonical" href="<?= htmlspecialchars($siteUrl, ENT_QUOTES, 'UTF-8') ?>">
   <meta name="robots" content="index, follow">
 
@@ -41,6 +42,7 @@ $ogImage = $siteUrl . 'screenshot.png?v=' . filemtime('screenshot.png');
   <link rel="icon" href="favicon.ico?v=<?= filemtime('favicon.ico') ?>" sizes="48x48">
   <link rel="icon" href="favicon.svg?v=<?= filemtime('favicon.svg') ?>" type="image/svg+xml">
   <link rel="apple-touch-icon" href="favicon.png?v=<?= filemtime('favicon.png') ?>">
+  <link rel="manifest" href="manifest.webmanifest?v=<?= filemtime('manifest.webmanifest') ?>">
   <link rel="stylesheet" href="css/style.min.css?v=<?= filemtime('css/style.min.css') ?>">
   <script type="importmap">
   {
