@@ -8,7 +8,7 @@ if (empty($_SESSION['game_token'])) {
 $siteUrl = 'https://isomania.online/';
 $pageTitle = 'Isomania — ізометрична survival-гра у браузері';
 $pageDescription = 'Isomania — браузерна ізометрична survival-гра з процедурним світом, атмосферними локаціями, парканами, будинками та дослідженням у стилі survival sandbox.';
-$ogImage = $siteUrl . 'screenshot.png';
+$ogImage = $siteUrl . 'screenshot.png?v=' . filemtime('screenshot.png');
 ?>
 <!DOCTYPE html>
 <html lang="uk">
