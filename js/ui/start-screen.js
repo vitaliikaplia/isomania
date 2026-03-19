@@ -13,6 +13,8 @@ const START_SCREEN = {
   music: null,
   musicStarted: false,
   musicUnlocked: false,
+  musicDisabled: false,
+  musicRequestId: 0,
   swatches: {},
   pointerTargetX: 0,
   pointerTargetY: 0,
@@ -130,14 +132,22 @@ function initStartScreenPreview() {
 }
 
 function attemptStartScreenMusic() {
-  if (START_SCREEN.musicStarted || !START_SCREEN.music) return;
+  if (START_SCREEN.musicStarted || START_SCREEN.musicDisabled || !START_SCREEN.music) return;
+
+  const requestId = ++START_SCREEN.musicRequestId;
 
   START_SCREEN.music.play()
     .then(() => {
+      if (START_SCREEN.musicDisabled || requestId !== START_SCREEN.musicRequestId) {
+        START_SCREEN.music.pause();
+        START_SCREEN.music.currentTime = 0;
+        return;
+      }
       START_SCREEN.musicStarted = true;
       START_SCREEN.musicUnlocked = true;
     })
     .catch(() => {
+      if (requestId !== START_SCREEN.musicRequestId) return;
       START_SCREEN.musicStarted = false;
     });
 }
@@ -166,6 +176,8 @@ function initStartScreenMusic() {
 }
 
 function stopStartScreenMusic() {
+  START_SCREEN.musicDisabled = true;
+  START_SCREEN.musicRequestId++;
   if (!START_SCREEN.music) return;
   START_SCREEN.music.pause();
   START_SCREEN.music.currentTime = 0;
