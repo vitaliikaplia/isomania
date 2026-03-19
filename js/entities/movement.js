@@ -28,6 +28,8 @@ const RIG_DEFAULTS = {
   upperBodyY: ANIM_CFG.upperBodyY,
   headY: ANIM_CFG.headY,
 };
+const PLAYER_POSITION_STORAGE_KEY = CONFIG.ui.playerPositionStorageKey;
+const PLAYER_POSITION_SAVE_INTERVAL_MS = 600;
 let crouchTogglePressed = false;
 const emoteState = {
   active: false,
@@ -35,6 +37,73 @@ const emoteState = {
   time: 0,
   duration: 0,
 };
+let lastSavedPlayerPosition = null;
+let lastPlayerPositionSaveAt = 0;
+
+function sanitizeStoredPlayerPosition(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const x = Number.parseFloat(raw.x);
+  const y = Number.parseFloat(raw.y);
+  const angle = Number.parseFloat(raw.angle);
+
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+
+  const safeX = Math.max(0.5, Math.min(MW - 1.5, x));
+  const safeY = Math.max(0.5, Math.min(MH - 1.5, y));
+  if (isSolid(safeX, safeY)) return null;
+
+  return {
+    x: safeX,
+    y: safeY,
+    angle: Number.isFinite(angle) ? angle : 0,
+  };
+}
+
+function loadStoredPlayerPosition() {
+  try {
+    const raw = localStorage.getItem(PLAYER_POSITION_STORAGE_KEY);
+    if (!raw) return null;
+    return sanitizeStoredPlayerPosition(JSON.parse(raw));
+  } catch (error) {
+    return null;
+  }
+}
+
+function savePlayerPosition(force = false) {
+  const nextPosition = {
+    x: Number(pl.x.toFixed(3)),
+    y: Number(pl.y.toFixed(3)),
+    angle: Number(pl.angle.toFixed(4)),
+  };
+
+  if (!force && lastSavedPlayerPosition &&
+    nextPosition.x === lastSavedPlayerPosition.x &&
+    nextPosition.y === lastSavedPlayerPosition.y &&
+    nextPosition.angle === lastSavedPlayerPosition.angle) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(PLAYER_POSITION_STORAGE_KEY, JSON.stringify(nextPosition));
+    lastSavedPlayerPosition = nextPosition;
+    lastPlayerPositionSaveAt = performance.now();
+  } catch (error) {
+    // Ignore storage failures so persistence never blocks gameplay.
+  }
+}
+
+function maybeSavePlayerPosition(force = false) {
+  if (force) {
+    savePlayerPosition(true);
+    return;
+  }
+
+  const now = performance.now();
+  if (now - lastPlayerPositionSaveAt < PLAYER_POSITION_SAVE_INTERVAL_MS) return;
+  if (!pl.moving && pl.speed <= MOVE_CFG.minSpeed) return;
+  savePlayerPosition(false);
+}
 
 function updatePlayerPos() {
   playerGroup.position.set(
@@ -44,6 +113,20 @@ function updatePlayerPos() {
   );
   playerGroup.rotation.y = pl.angle;
 }
+
+const storedPlayerPosition = loadStoredPlayerPosition();
+if (storedPlayerPosition) {
+  pl.x = storedPlayerPosition.x;
+  pl.y = storedPlayerPosition.y;
+  pl.angle = storedPlayerPosition.angle;
+  lastSavedPlayerPosition = {
+    x: Number(pl.x.toFixed(3)),
+    y: Number(pl.y.toFixed(3)),
+    angle: Number(pl.angle.toFixed(4)),
+  };
+}
+
+pl.groundY = getGroundHeightAt(pl.x, pl.y);
 updatePlayerPos();
 
 function lerpTo(current, target, rate, dt) {
@@ -423,4 +506,8 @@ function update(dt) {
 
   pl.groundY = lerpTo(pl.groundY, getGroundHeightAt(pl.x, pl.y), 14, dt);
   updatePlayerPos();
+  maybeSavePlayerPosition();
 }
+
+window.addEventListener('pagehide', () => { maybeSavePlayerPosition(true); });
+window.addEventListener('beforeunload', () => { maybeSavePlayerPosition(true); });

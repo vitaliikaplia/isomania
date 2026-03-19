@@ -216,6 +216,8 @@ const CONFIG = {
   ui: {
     playerNameStorageKey: 'isomania_playerName',
     playerAppearanceStorageKey: 'isomania_playerAppearance',
+    playerPositionStorageKey: 'isomania_playerPosition',
+    cameraZoomStorageKey: 'isomania_cameraZoom',
     contextMenu: {
       radius: 92,
       anchorHeight: 0.58,
