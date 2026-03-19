@@ -16,6 +16,42 @@ const PLAYER_STYLE_TARGETS = {
   shoes: [],
 };
 
+function clampStyleIndex(part, value) {
+  const palette = PLAYER_STYLE_OPTIONS[part];
+  if (!palette || palette.length === 0) return 0;
+
+  const normalized = Number.parseInt(value, 10);
+  if (!Number.isFinite(normalized)) return 0;
+  return Math.max(0, Math.min(palette.length - 1, normalized));
+}
+
+function savePlayerAppearance() {
+  try {
+    localStorage.setItem(
+      CONFIG.ui.playerAppearanceStorageKey,
+      JSON.stringify(PLAYER_STYLE_STATE)
+    );
+  } catch (error) {
+    // Ignore storage failures so appearance does not block the game.
+  }
+}
+
+function loadPlayerAppearance() {
+  try {
+    const raw = localStorage.getItem(CONFIG.ui.playerAppearanceStorageKey);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+
+    for (const part in PLAYER_STYLE_STATE) {
+      PLAYER_STYLE_STATE[part] = clampStyleIndex(part, parsed[part]);
+    }
+  } catch (error) {
+    // Ignore malformed storage and fall back to defaults.
+  }
+}
+
 function registerStyleMaterial(part, material) {
   if (!PLAYER_STYLE_TARGETS[part]) return material;
   PLAYER_STYLE_TARGETS[part].push(material);
@@ -44,6 +80,7 @@ function cyclePlayerAppearance(part, direction) {
   const total = palette.length;
   PLAYER_STYLE_STATE[part] = (PLAYER_STYLE_STATE[part] + direction + total) % total;
   applyPlayerAppearance();
+  savePlayerAppearance();
   return PLAYER_STYLE_STATE[part];
 }
 
@@ -80,35 +117,39 @@ function createPlayerRig() {
   shoulders.castShadow = true;
   upperBody.add(shoulders);
 
-  const armGeo = new THREE.BoxGeometry(0.1, 0.34, 0.12);
+  const upperArmGeo = new THREE.BoxGeometry(0.1, 0.18, 0.12);
+  const forearmGeo = new THREE.BoxGeometry(0.09, 0.17, 0.11);
   const handGeo = new THREE.SphereGeometry(0.04, 6, 6);
   const skinMat = new THREE.MeshLambertMaterial({ color: 0xC49A6C });
 
-  const armPivotL = new THREE.Group();
-  armPivotL.position.set(-0.2, 0.40, 0);
-  upperBody.add(armPivotL);
+  function createArm(sideX) {
+    const armPivot = new THREE.Group();
+    armPivot.position.set(sideX, 0.40, 0);
+    upperBody.add(armPivot);
 
-  const armL = new THREE.Mesh(armGeo, createStyleMaterial('shirt', 0x526840));
-  armL.position.y = -0.17;
-  armL.castShadow = true;
-  armPivotL.add(armL);
+    const upperArm = new THREE.Mesh(upperArmGeo, createStyleMaterial('shirt', 0x526840));
+    upperArm.position.y = -0.09;
+    upperArm.castShadow = true;
+    armPivot.add(upperArm);
 
-  const handL = new THREE.Mesh(handGeo, skinMat);
-  handL.position.y = -0.36;
-  armPivotL.add(handL);
+    const elbowPivot = new THREE.Group();
+    elbowPivot.position.y = -0.18;
+    armPivot.add(elbowPivot);
 
-  const armPivotR = new THREE.Group();
-  armPivotR.position.set(0.2, 0.40, 0);
-  upperBody.add(armPivotR);
+    const forearm = new THREE.Mesh(forearmGeo, createStyleMaterial('shirt', 0x526840));
+    forearm.position.y = -0.085;
+    forearm.castShadow = true;
+    elbowPivot.add(forearm);
 
-  const armR = new THREE.Mesh(armGeo, createStyleMaterial('shirt', 0x526840));
-  armR.position.y = -0.17;
-  armR.castShadow = true;
-  armPivotR.add(armR);
+    const hand = new THREE.Mesh(handGeo, skinMat);
+    hand.position.y = -0.19;
+    elbowPivot.add(hand);
 
-  const handR = new THREE.Mesh(handGeo, skinMat);
-  handR.position.y = -0.36;
-  armPivotR.add(handR);
+    return { armPivot, elbowPivot };
+  }
+
+  const leftArm = createArm(-0.2);
+  const rightArm = createArm(0.2);
 
   const neckGeo = new THREE.CylinderGeometry(0.055, 0.065, 0.06, 6);
   const neck = new THREE.Mesh(neckGeo, new THREE.MeshLambertMaterial({ color: 0xC49A6C }));
@@ -256,8 +297,10 @@ function createPlayerRig() {
     group,
     upperBody,
     headGroup,
-    armPivotL,
-    armPivotR,
+    armPivotL: leftArm.armPivot,
+    armPivotR: rightArm.armPivot,
+    elbowPivotL: leftArm.elbowPivot,
+    elbowPivotR: rightArm.elbowPivot,
     legPivotL: leftLeg.legPivot,
     legPivotR: rightLeg.legPivot,
     kneePivotL: leftLeg.kneePivot,
@@ -273,6 +316,8 @@ const upperBody = MAIN_PLAYER_RIG.upperBody;
 const headGroup = MAIN_PLAYER_RIG.headGroup;
 const armPivotL = MAIN_PLAYER_RIG.armPivotL;
 const armPivotR = MAIN_PLAYER_RIG.armPivotR;
+const elbowPivotL = MAIN_PLAYER_RIG.elbowPivotL;
+const elbowPivotR = MAIN_PLAYER_RIG.elbowPivotR;
 const legPivotL = MAIN_PLAYER_RIG.legPivotL;
 const legPivotR = MAIN_PLAYER_RIG.legPivotR;
 const kneePivotL = MAIN_PLAYER_RIG.kneePivotL;
@@ -281,4 +326,5 @@ const anklePivotL = MAIN_PLAYER_RIG.anklePivotL;
 const anklePivotR = MAIN_PLAYER_RIG.anklePivotR;
 
 scene.add(playerGroup);
+loadPlayerAppearance();
 applyPlayerAppearance();

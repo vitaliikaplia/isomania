@@ -8,7 +8,9 @@ import * as THREE from 'three';
 //@prepros-append world/map.js
 //@prepros-append world/terrain.js
 //@prepros-append world/buildings.js
+//@prepros-append world/fences.js
 //@prepros-append world/trees.js
+//@prepros-append world/props.js
 //@prepros-append entities/player.js
 //@prepros-append entities/movement.js
 //@prepros-append engine/camera.js

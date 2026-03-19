@@ -124,6 +124,7 @@ function update(dt) {
   const crouchKneeBend = ANIM_CFG.crouch.kneeBend * pl.crouchBlend;
   const crouchAnkleBend = ANIM_CFG.crouch.ankleBend * pl.crouchBlend;
   const crouchArmForward = ANIM_CFG.crouch.armForward * pl.crouchBlend;
+  const crouchElbowBend = ANIM_CFG.crouch.elbowBend * pl.crouchBlend;
   const crouchLean = ANIM_CFG.crouch.torsoLean * pl.crouchBlend;
 
   const leftStride = leftDrive * a.legAmp * intensity * strideBlend;
@@ -137,6 +138,8 @@ function update(dt) {
   const armSwing = leftDrive * a.armAmp * intensity;
   armPivotL.rotation.x = -armSwing + crouchArmForward;
   armPivotR.rotation.x = armSwing + crouchArmForward;
+  elbowPivotL.rotation.x = -Math.max(0, -armSwing) * a.elbowAmp * intensity + crouchElbowBend;
+  elbowPivotR.rotation.x = -Math.max(0, armSwing) * a.elbowAmp * intensity + crouchElbowBend;
 
   kneePivotL.rotation.x = leftLift * a.kneeAmp * intensity + crouchKneeBend;
   kneePivotR.rotation.x = rightLift * a.kneeAmp * intensity + crouchKneeBend;
@@ -202,6 +205,8 @@ function update(dt) {
     legPivotR.rotation.x = lerpTo(legPivotR.rotation.x, crouchLegBend, ANIM_CFG.idleReturnRate, dt);
     kneePivotL.rotation.x = lerpTo(kneePivotL.rotation.x, crouchKneeBend, ANIM_CFG.idleReturnRate, dt);
     kneePivotR.rotation.x = lerpTo(kneePivotR.rotation.x, crouchKneeBend, ANIM_CFG.idleReturnRate, dt);
+    elbowPivotL.rotation.x = lerpTo(elbowPivotL.rotation.x, crouchElbowBend, ANIM_CFG.idleReturnRate, dt);
+    elbowPivotR.rotation.x = lerpTo(elbowPivotR.rotation.x, crouchElbowBend, ANIM_CFG.idleReturnRate, dt);
     anklePivotL.rotation.x = lerpTo(
       anklePivotL.rotation.x,
       (-(crouchLegBend + crouchKneeBend) * ANIM_CFG.walk.ankleLevel) + crouchAnkleBend,

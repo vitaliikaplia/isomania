@@ -8,6 +8,7 @@ const vRoads = WORLD.roads.cols;
 const gInfo = WORLD.buildingGroups;
 const COLLIDERS = WORLD.colliders;
 const FENCE_COLLIDERS = [];
+const PROP_COLLIDERS = [];
 
 function worldXFromCol(col) {
   return col - MW / 2 + 0.5;
@@ -37,8 +38,31 @@ function addFenceCollider(cx, cz, hw, hd) {
   FENCE_COLLIDERS.push({ cx, cz, hw, hd });
 }
 
+function addPropCollider(cx, cz, hw, hd) {
+  PROP_COLLIDERS.push({ cx, cz, hw, hd });
+}
+
+function addWorldPropCollider(wx, wz, hw, hd) {
+  addPropCollider(
+    wx + MW / 2 - 0.5,
+    wz + MH / 2 - 0.5,
+    hw,
+    hd
+  );
+}
+
 function hitsFenceCollider(tx, ty) {
   for (const collider of FENCE_COLLIDERS) {
+    if (Math.abs(tx - collider.cx) < collider.hw && Math.abs(ty - collider.cz) < collider.hd) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hitsPropCollider(tx, ty) {
+  for (const collider of PROP_COLLIDERS) {
     if (Math.abs(tx - collider.cx) < collider.hw && Math.abs(ty - collider.cz) < collider.hd) {
       return true;
     }
@@ -53,6 +77,7 @@ function isSolid(tx, ty) {
 
   if (c < 0 || c >= MW || r < 0 || r >= MH) return true;
   if (hitsFenceCollider(tx, ty)) return true;
+  if (hitsPropCollider(tx, ty)) return true;
 
   for (const [dc, dr] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const nc = c + dc;

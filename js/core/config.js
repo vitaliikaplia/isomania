@@ -41,11 +41,19 @@ const CONFIG = {
       { t: 0xB8C0A0, l: 0x2A5020, r: 0x407030 },
     ],
     roofColors: [0x8B4513, 0x6B3A2A, 0x5C4033, 0x7A5530, 0x4A3628, 0x6E4B3A],
-    smallStructureColors: [0x8B7355, 0x6B6B6B, 0x7A6040, 0x556B55],
+    bushColors: [0x2f5b25, 0x3a6a31, 0x47763a, 0x2e6430, 0x567b43],
+    binColors: {
+      body: [0x495055, 0x3f5a43, 0x5a5a4a],
+      lid: [0x2f3438, 0x2b412f, 0x44443c],
+      wheel: 0x161616,
+    },
+    propColliders: {
+      trashBin: { hw: 0.16, hd: 0.14 },
+    },
     colliders: {
       1: { shape: 'box', hw: 0.5, hd: 0.5 },
       2: { shape: 'circle', radius: 0.2 },
-      3: { shape: 'box', hw: 0.25, hd: 0.25 },
+      3: { shape: 'circle', radius: 0.18 },
       6: { shape: 'circle', radius: 0.15 },
     },
   },
@@ -115,6 +123,7 @@ const CONFIG = {
         kneeBend: 0.9,
         ankleBend: -0.08,
         armForward: -0.12,
+        elbowBend: -0.22,
         torsoLean: 0.22,
         bodyYaw: 0.08,
         bodyRoll: 0.06,
@@ -129,6 +138,7 @@ const CONFIG = {
         ankleLift: 0.14,
         ankleLevel: 0.94,
         armAmp: 0.42,
+        elbowAmp: 0.18,
         bob: 0.02,
         headBob: 0.014,
         freq: 7.2,
@@ -145,6 +155,7 @@ const CONFIG = {
         ankleLift: 0.22,
         ankleLevel: 0.92,
         armAmp: 0.66,
+        elbowAmp: 0.26,
         bob: 0.04,
         headBob: 0.02,
         freq: 10.8,
@@ -159,6 +170,7 @@ const CONFIG = {
   },
   ui: {
     playerNameStorageKey: 'isomania_playerName',
+    playerAppearanceStorageKey: 'isomania_playerAppearance',
     startScreen: {
       musicPath: 'audio/screen/start.mp3',
       animation: {

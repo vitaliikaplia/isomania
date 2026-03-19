@@ -236,6 +236,8 @@ function updateStartScreen(dt) {
   rig.armPivotR.rotation.x = -0.08 - armSwing * 0.34 + hop * 0.12;
   rig.armPivotL.rotation.z = 0.14 + sway * 0.05;
   rig.armPivotR.rotation.z = -0.14 - sway * 0.05;
+  rig.elbowPivotL.rotation.x = -0.12 - Math.max(0, -armSwing) * 0.34 - crouch * 0.08;
+  rig.elbowPivotR.rotation.x = -0.12 - Math.max(0, armSwing) * 0.34 - crouch * 0.08;
 
   rig.legPivotL.rotation.x = -0.14 + legSwing * 0.08 - crouch * 0.1;
   rig.legPivotR.rotation.x = -0.14 - legSwing * 0.08 - crouch * 0.1;
