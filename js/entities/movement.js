@@ -386,6 +386,7 @@ function update(dt) {
     emoteState.time = Math.min(emoteState.duration, emoteState.time + dt);
     const t = clamp01(emoteState.time / emoteState.duration);
     const hello = emoteState.id === 'hello';
+    const history = emoteState.id === 'history';
     const victory = emoteState.id === 'victory';
     const surprise = emoteState.id === 'surprise';
     const scream = emoteState.id === 'scream';
@@ -429,6 +430,75 @@ function update(dt) {
       upperBody.position.y += surpriseCfg.bodyLift * shock;
       upperBody.rotation.x += surpriseCfg.torsoLean * shock;
       headGroup.rotation.x = lerpTo(headGroup.rotation.x, -0.08 * shock, ANIM_CFG.bodyReturnRate, dt);
+    }
+
+    if (history) {
+      const historyCfg = EMOTE_CFG.history;
+      const talkWave = emoteState.time * 2.35;
+      const sway = -Math.sin(talkWave);
+      const beat = Math.sin(talkWave * 1.85);
+      const gather = clamp01((Math.sin(talkWave * 0.9) + 1) * 0.5);
+      const spread = 1 - gather;
+      const accent = Math.max(0, Math.sin(talkWave * 1.6));
+      const handSwap = -Math.sin(talkWave * 0.52);
+      const leftLead = Math.max(0, handSwap);
+      const rightLead = Math.max(0, -handSwap);
+
+      upperBody.rotation.y = lerpTo(
+        upperBody.rotation.y,
+        sway * historyCfg.torsoSway,
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+      upperBody.rotation.x = lerpTo(
+        upperBody.rotation.x,
+        historyCfg.torsoPitch + Math.abs(beat) * 0.012,
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+      upperBody.rotation.z = lerpTo(
+        upperBody.rotation.z,
+        beat * 0.03,
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+
+      headGroup.rotation.y = lerpTo(
+        headGroup.rotation.y,
+        -sway * historyCfg.headYaw,
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+      headGroup.rotation.x = lerpTo(
+        headGroup.rotation.x,
+        historyCfg.headNod * (0.4 + Math.abs(beat)),
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+      headGroup.rotation.z = lerpTo(
+        headGroup.rotation.z,
+        -beat * 0.025,
+        ANIM_CFG.bodyReturnRate,
+        dt
+      );
+
+      armPivotL.rotation.x = -historyCfg.handTalkLift * (0.4 + (1 - accent) * 0.6);
+      armPivotR.rotation.x = -historyCfg.handTalkLift * (0.4 + accent * 0.6);
+      armPivotL.rotation.z = historyCfg.handTalkOpen * (0.55 + spread * 0.45) + 0.08 * rightLead;
+      armPivotR.rotation.z = -(historyCfg.handTalkOpen * (0.55 + spread * 0.45) + 0.08 * leftLead);
+      armPivotL.rotation.y = -historyCfg.handTalkYaw * (0.45 + rightLead * 0.55);
+      armPivotR.rotation.y = historyCfg.handTalkYaw * (0.45 + leftLead * 0.55);
+      elbowPivotL.rotation.x = -historyCfg.elbowBend * (0.55 + gather * 0.35 + rightLead * 0.1);
+      elbowPivotR.rotation.x = -historyCfg.elbowBend * (0.55 + gather * 0.35 + leftLead * 0.1);
+      elbowPivotL.rotation.z = 0.22 * rightLead;
+      elbowPivotR.rotation.z = -0.22 * leftLead;
+
+      armPivotL.position.x = RIG_DEFAULTS.armPivotL.x - historyCfg.handTalkGather * (0.4 + gather * 0.6);
+      armPivotR.position.x = RIG_DEFAULTS.armPivotR.x + historyCfg.handTalkGather * (0.4 + gather * 0.6);
+      armPivotL.position.y = RIG_DEFAULTS.armPivotL.y + historyCfg.shoulderRaise * (0.55 + (1 - accent) * 0.45);
+      armPivotR.position.y = RIG_DEFAULTS.armPivotR.y + historyCfg.shoulderRaise * (0.55 + accent * 0.45);
+      armPivotL.position.z = RIG_DEFAULTS.armPivotL.z + historyCfg.handTalkReach * gather;
+      armPivotR.position.z = RIG_DEFAULTS.armPivotR.z + historyCfg.handTalkReach * gather;
     }
 
     if (victory) {

@@ -117,25 +117,11 @@ body {
   }
 }
 
-.context-menu-center {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  background: rgba(244, 211, 127, 0.94);
-  box-shadow:
-    0 0 0 6px rgba(244, 211, 127, 0.16),
-    0 8px 22px rgba(244, 211, 127, 0.28);
-  transform: translate(-50%, -50%);
-}
-
 .context-menu-item {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 140px;
+  width: 148px;
   min-height: 70px;
   padding: 12px 14px;
   border: 1px solid rgba(147, 231, 196, 0.24);

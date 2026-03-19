@@ -188,6 +188,20 @@ const CONFIG = {
         bodyLift: 0.025,
         torsoLean: -0.06,
       },
+      history: {
+        duration: 58,
+        torsoSway: 0.09,
+        torsoPitch: 0.03,
+        headYaw: 0.12,
+        headNod: 0.045,
+        handTalkLift: 0.28,
+        handTalkOpen: 0.48,
+        handTalkYaw: 0.18,
+        handTalkReach: 0.06,
+        handTalkGather: 0.075,
+        elbowBend: 0.6,
+        shoulderRaise: 0.02,
+      },
       scream: {
         duration: 3,
         armSideLift: 1.34,
@@ -224,6 +238,7 @@ const CONFIG = {
       items: [
         { id: 'hello', label: 'Привітатись', hint: 'Програти голос і помахати рукою' },
         { id: 'surprise', label: 'Здивуватись', hint: 'Різко підняти плечі й розвести руки' },
+        { id: 'history', label: 'Історія', hint: 'Розповідати цікаву історію з жестами' },
         { id: 'scream', label: 'Закричати', hint: 'Схопитися за голову і кричати' },
         { id: 'victory', label: 'Перемога', hint: 'Стати струнко і віддати честь' },
       ],
@@ -278,12 +293,14 @@ const CONFIG = {
       clips: {
         hello: 'voice-hello.mp3',
         victory: 'voice-peremoga.mp3',
+        history: 'voice-history.mp3',
         surprise: 'voice-uuu.mp3',
         scream: 'voice-scream.mp3',
       },
       volume: {
         hello: 0.94,
         victory: 0.98,
+        history: 0.96,
         surprise: 0.98,
         scream: 1,
       },

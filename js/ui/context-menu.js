@@ -6,7 +6,6 @@ const contextMenuVector = new THREE.Vector3();
 
 const CONTEXT_MENU = {
   root: null,
-  center: null,
   items: [],
   visible: false,
 };
@@ -16,6 +15,12 @@ const CONTEXT_ACTIONS = {
     trigger() {
       playVoiceLine('hello');
       startPlayerEmote('hello');
+    },
+  },
+  history: {
+    trigger() {
+      playVoiceLine('history');
+      startPlayerEmote('history');
     },
   },
   victory: {
@@ -44,10 +49,6 @@ function createContextMenu() {
   const root = document.createElement('div');
   root.className = 'context-menu';
 
-  const center = document.createElement('div');
-  center.className = 'context-menu-center';
-  root.appendChild(center);
-
   CONTEXT_MENU_CFG.items.forEach(item => {
     const button = document.createElement('button');
     button.type = 'button';
@@ -61,7 +62,6 @@ function createContextMenu() {
 
   contextMenuWrap.appendChild(root);
   CONTEXT_MENU.root = root;
-  CONTEXT_MENU.center = center;
 }
 
 function isContextMenuAvailable() {
@@ -103,7 +103,21 @@ function layoutContextMenu() {
   const buttonCount = CONTEXT_MENU.items.length;
   if (buttonCount === 0) return;
 
-  const radius = CONTEXT_MENU_CFG.radius;
+  let maxButtonWidth = 0;
+  let maxButtonHeight = 0;
+  for (const button of CONTEXT_MENU.items) {
+    maxButtonWidth = Math.max(maxButtonWidth, button.offsetWidth);
+    maxButtonHeight = Math.max(maxButtonHeight, button.offsetHeight);
+  }
+
+  const spacing = Math.max(maxButtonWidth + 24, maxButtonHeight * 1.6, 132);
+  const radius = buttonCount === 1
+    ? CONTEXT_MENU_CFG.radius
+    : Math.max(
+      CONTEXT_MENU_CFG.radius,
+      (spacing * buttonCount) / (2 * Math.PI),
+      maxButtonHeight * 1.35
+    );
   const step = (Math.PI * 2) / buttonCount;
   const startAngle = -Math.PI / 2;
 
