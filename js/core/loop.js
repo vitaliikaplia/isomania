@@ -24,6 +24,15 @@ const playerNameInput = document.getElementById('player-name');
 const bootstrap = window.ISOMANIA_BOOTSTRAP || {};
 let playerName = localStorage.getItem(CONFIG.ui.playerNameStorageKey) || '';
 
+if (WORLD && WORLD.source && WORLD.source !== 'procedural') {
+  console.info('[Isomania] Remote world loaded', {
+    source: WORLD.source,
+    width: WORLD.width,
+    height: WORLD.height,
+    meta: WORLD.meta || null,
+  });
+}
+
 function notifyGameJoin(name) {
   if (!bootstrap.notifyUrl || !bootstrap.gameToken) return;
 

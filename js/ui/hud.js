@@ -3,6 +3,8 @@
 const hud = document.getElementById('hud');
 const btnFs = document.getElementById('btn-fs');
 const wrap = document.getElementById('wrap');
+const worldMeta = WORLD.meta || null;
+const worldSourceLabel = (WORLD.source || 'procedural').toUpperCase();
 
 btnFs.addEventListener('click', () => {
   if (!document.fullscreenElement) {
@@ -18,5 +20,8 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 function updateHud() {
-  hud.textContent = `pos: ${pl.x.toFixed(1)}, ${pl.y.toFixed(1)}  zoom: ${cam.zoom.toFixed(2)}x`;
+  const radiusPart = worldMeta && Number.isFinite(worldMeta.radiusMeters)
+    ? `  radius: ${Math.round(worldMeta.radiusMeters)}m`
+    : '';
+  hud.textContent = `${worldSourceLabel}  pos: ${pl.x.toFixed(1)}, ${pl.y.toFixed(1)}  zoom: ${cam.zoom.toFixed(2)}x${radiusPart}`;
 }

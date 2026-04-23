@@ -99,6 +99,16 @@ The project focuses on a stylized 2.5D world, procedural neighborhood generation
 - Styling source lives in `scss/style.scss` and compiles to `css/style.min.css`
 - After changing source JS or SCSS, rebuild the generated assets through `Prepros`
 
+## Remote World Experiment
+
+The project can also bootstrap a real-world inspired map instead of the procedural neighborhood.
+
+- Set `WORLD_SOURCE=osm` to build the world from OpenStreetMap geometry
+- Set `WORLD_SOURCE=hybrid` to combine OSM geometry with optional Google enrichment
+- Configure `MAP_CENTER_LAT`, `MAP_CENTER_LNG`, and `MAP_RADIUS_METERS` in `.env`
+- Cached upstream responses and final world snapshots are stored in `cache/`
+- Use `.env.example` as the starting point for the required keys and parameters
+
 ## Audio Assets
 
 Place generated audio files in the following directories:

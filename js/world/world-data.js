@@ -17,17 +17,147 @@ function createSeededRandom(initialSeed) {
   };
 }
 
-function createWorldData() {
-  const width = CONFIG.world.width;
-  const height = CONFIG.world.height;
-  const map = Array.from({ length: height }, () => new Array(width).fill(CONFIG.world.tiles.grass));
+function buildWorldGroups(map, width, height, tiles) {
   const buildings = [];
   const buildingGroups = [];
   const buildingGroupMap = Array.from({ length: height }, () => new Array(width).fill(-1));
+
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      if (map[r][c] === tiles.building) {
+        buildings.push({ r, c, w: 1, d: 1 });
+      }
+    }
+  }
+
+  let groupId = 0;
+
+  for (let r = 0; r < height; r++) {
+    for (let c = 0; c < width; c++) {
+      if (map[r][c] !== tiles.building || buildingGroupMap[r][c] !== -1) continue;
+
+      const cells = [];
+      const queue = [{ r, c }];
+      let queueIndex = 0;
+      buildingGroupMap[r][c] = groupId;
+
+      while (queueIndex < queue.length) {
+        const current = queue[queueIndex++];
+        cells.push(current);
+
+        for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+          const nr = current.r + dr;
+          const nc = current.c + dc;
+
+          if (nr < 0 || nr >= height || nc < 0 || nc >= width) continue;
+          if (map[nr][nc] !== tiles.building || buildingGroupMap[nr][nc] !== -1) continue;
+
+          buildingGroupMap[nr][nc] = groupId;
+          queue.push({ r: nr, c: nc });
+        }
+      }
+
+      let minC = width;
+      let maxC = 0;
+      let minR = height;
+      let maxR = 0;
+
+      for (const cell of cells) {
+        if (cell.c < minC) minC = cell.c;
+        if (cell.c > maxC) maxC = cell.c;
+        if (cell.r < minR) minR = cell.r;
+        if (cell.r > maxR) maxR = cell.r;
+      }
+
+      const w = maxC - minC + 1;
+      const d = maxR - minR + 1;
+      const area = cells.length;
+      const floors = area <= 6 ? (groupId % 3 === 0 ? 2 : 1) : (groupId % 2 === 0 ? 2 : 1);
+      const floorH = 1.4 + (groupId % 3) * 0.15;
+
+      buildingGroups.push({
+        pal: CONFIG.world.buildingPalettes[groupId % CONFIG.world.buildingPalettes.length],
+        h: floors * floorH,
+        floors,
+        floorH,
+        roofType: groupId % 3,
+        minC,
+        maxC,
+        minR,
+        maxR,
+        w,
+        d,
+        area,
+        cells,
+      });
+
+      groupId++;
+    }
+  }
+
+  return { buildings, buildingGroups, buildingGroupMap };
+}
+
+function scaleRoadAxis(list, baseSize, targetSize) {
+  const maxIndex = Math.max(2, targetSize - 3);
+  const scaled = list.map(value => {
+    const ratio = value / baseSize;
+    return Math.max(1, Math.min(maxIndex, Math.round(ratio * targetSize)));
+  });
+
+  return [...new Set(scaled)].sort((a, b) => a - b);
+}
+
+function createRemoteWorldData(remoteWorld) {
+  if (!remoteWorld || !Array.isArray(remoteWorld.map)) return null;
+
+  const width = Math.max(1, Number.parseInt(remoteWorld.width, 10) || CONFIG.world.width);
+  const height = Math.max(1, Number.parseInt(remoteWorld.height, 10) || CONFIG.world.height);
+  const tiles = CONFIG.world.tiles;
+  const knownTiles = new Set(Object.values(tiles));
+  const sanitizedMap = [];
+
+  for (let r = 0; r < height; r++) {
+    const sourceRow = Array.isArray(remoteWorld.map[r]) ? remoteWorld.map[r] : [];
+    const nextRow = new Array(width).fill(tiles.grass);
+
+    for (let c = 0; c < width; c++) {
+      const rawTile = Number.parseInt(sourceRow[c], 10);
+      nextRow[c] = Number.isFinite(rawTile) && knownTiles.has(rawTile) ? rawTile : tiles.grass;
+    }
+
+    sanitizedMap.push(nextRow);
+  }
+
+  const grouped = buildWorldGroups(sanitizedMap, width, height, tiles);
+
+  return {
+    width,
+    height,
+    map: sanitizedMap,
+    roads: {
+      rows: Array.isArray(remoteWorld.roads && remoteWorld.roads.rows) ? remoteWorld.roads.rows : [],
+      cols: Array.isArray(remoteWorld.roads && remoteWorld.roads.cols) ? remoteWorld.roads.cols : [],
+    },
+    tiles,
+    buildings: grouped.buildings,
+    buildingGroups: grouped.buildingGroups,
+    buildingGroupMap: grouped.buildingGroupMap,
+    colliders: CONFIG.world.colliders,
+    spawn: remoteWorld.spawn || null,
+    meta: remoteWorld.meta || null,
+    source: remoteWorld.source || 'remote',
+  };
+}
+
+function createProceduralWorldData() {
+  const width = CONFIG.world.width;
+  const height = CONFIG.world.height;
+  const map = Array.from({ length: height }, () => new Array(width).fill(CONFIG.world.tiles.grass));
   const random = createSeededRandom(CONFIG.world.seeds.buildings);
   const roads = {
-    rows: [...CONFIG.world.roadRows],
-    cols: [...CONFIG.world.roadCols],
+    rows: scaleRoadAxis(CONFIG.world.roadRows, 192, height),
+    cols: scaleRoadAxis(CONFIG.world.roadCols, 192, width),
   };
   const generation = CONFIG.world.generation;
   const tiles = CONFIG.world.tiles;
@@ -71,10 +201,7 @@ function createWorldData() {
         map[r + dr][c + dc] = tiles.building;
       }
     }
-
-    const building = { r, c, w, d };
-    buildings.push(building);
-    return building;
+    return { r, c, w, d };
   }
 
   function addFence(br, bc, bw, bd, roadSide) {
@@ -185,77 +312,11 @@ function createWorldData() {
     }
   }
 
-  function buildBuildingGroups() {
-    let groupId = 0;
-
-    for (let r = 0; r < height; r++) {
-      for (let c = 0; c < width; c++) {
-        if (map[r][c] !== tiles.building || buildingGroupMap[r][c] !== -1) continue;
-
-        const cells = [];
-        const queue = [{ r, c }];
-        buildingGroupMap[r][c] = groupId;
-
-        while (queue.length) {
-          const current = queue.shift();
-          cells.push(current);
-
-          for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-            const nr = current.r + dr;
-            const nc = current.c + dc;
-
-            if (nr < 0 || nr >= height || nc < 0 || nc >= width) continue;
-            if (map[nr][nc] !== tiles.building || buildingGroupMap[nr][nc] !== -1) continue;
-
-            buildingGroupMap[nr][nc] = groupId;
-            queue.push({ r: nr, c: nc });
-          }
-        }
-
-        let minC = width;
-        let maxC = 0;
-        let minR = height;
-        let maxR = 0;
-
-        for (const cell of cells) {
-          if (cell.c < minC) minC = cell.c;
-          if (cell.c > maxC) maxC = cell.c;
-          if (cell.r < minR) minR = cell.r;
-          if (cell.r > maxR) maxR = cell.r;
-        }
-
-        const w = maxC - minC + 1;
-        const d = maxR - minR + 1;
-        const area = cells.length;
-        const floors = area <= 6 ? (groupId % 3 === 0 ? 2 : 1) : (groupId % 2 === 0 ? 2 : 1);
-        const floorH = 1.4 + (groupId % 3) * 0.15;
-
-        buildingGroups.push({
-          pal: CONFIG.world.buildingPalettes[groupId % CONFIG.world.buildingPalettes.length],
-          h: floors * floorH,
-          floors,
-          floorH,
-          roofType: groupId % 3,
-          minC,
-          maxC,
-          minR,
-          maxR,
-          w,
-          d,
-          area,
-          cells,
-        });
-
-        groupId++;
-      }
-    }
-  }
-
   fillRoads();
   placeBuildings();
   placeTrees();
   placeStructures();
-  buildBuildingGroups();
+  const grouped = buildWorldGroups(map, width, height, tiles);
 
   return {
     width,
@@ -263,11 +324,13 @@ function createWorldData() {
     map,
     roads,
     tiles,
-    buildings,
-    buildingGroups,
-    buildingGroupMap,
+    buildings: grouped.buildings,
+    buildingGroups: grouped.buildingGroups,
+    buildingGroupMap: grouped.buildingGroupMap,
     colliders: CONFIG.world.colliders,
+    source: 'procedural',
   };
 }
 
-const WORLD = createWorldData();
+const bootRemoteWorld = createRemoteWorldData((window.ISOMANIA_BOOTSTRAP || {}).worldData);
+const WORLD = bootRemoteWorld || createProceduralWorldData();

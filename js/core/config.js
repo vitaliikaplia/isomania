@@ -1,7 +1,15 @@
+const BOOTSTRAP_WORLD_CONFIG = (window.ISOMANIA_BOOTSTRAP && window.ISOMANIA_BOOTSTRAP.worldConfig) || {};
+
+function normalizeBootstrapWorldDimension(value, fallback) {
+  const normalized = Number.parseInt(value, 10);
+  if (!Number.isFinite(normalized)) return fallback;
+  return Math.max(96, normalized);
+}
+
 const CONFIG = {
   world: {
-    width: 192,
-    height: 192,
+    width: normalizeBootstrapWorldDimension(BOOTSTRAP_WORLD_CONFIG.width, 192),
+    height: normalizeBootstrapWorldDimension(BOOTSTRAP_WORLD_CONFIG.height, 192),
     tileSize: 1,
     roadRows: [30, 62, 94, 126, 158],
     roadCols: [24, 56, 88, 120, 152],
@@ -85,7 +93,7 @@ const CONFIG = {
     lightOffset: [10, 20, 10],
     zoom: {
       initial: 1,
-      min: 0.4,
+      min: 0.2,
       max: 10,
       wheelStepIn: 1.1,
       wheelStepOut: 0.9,
@@ -105,6 +113,7 @@ const CONFIG = {
       walkSpeed: 1.3,
       runSpeed: 2.6,
       crouchSpeed: 0.72,
+      debugBoostMultiplier: 10,
       accel: 3,
       decel: 4,
       minSpeed: 0.05,
@@ -340,4 +349,9 @@ const CONFIG = {
     asphaltColors: [0x3A3A3A, 0x383838, 0x3C3C3C, 0x353535],
     sidewalkColors: [0xA0A090, 0x989888, 0x9C9C8C, 0xA4A494],
   },
+};
+
+CONFIG.player.spawn = {
+  x: Math.floor(CONFIG.world.width / 2),
+  y: Math.floor(CONFIG.world.height / 2),
 };

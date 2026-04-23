@@ -4,43 +4,43 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit30a05b48d381f162e77519cbdb4a260f
+class ComposerStaticInitd068498a9809b93dd2a4b3efb6690bc8
 {
     public static $prefixLengthsPsr4 = array (
-        'M' => 
+        'M' =>
         array (
             'MaxMind\\WebService\\' => 19,
             'MaxMind\\Exception\\' => 18,
             'MaxMind\\Db\\' => 11,
         ),
-        'G' => 
+        'G' =>
         array (
             'GeoIp2\\' => 7,
         ),
-        'C' => 
+        'C' =>
         array (
             'Composer\\CaBundle\\' => 18,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'MaxMind\\WebService\\' => 
+        'MaxMind\\WebService\\' =>
         array (
             0 => __DIR__ . '/..' . '/maxmind/web-service-common/src/WebService',
         ),
-        'MaxMind\\Exception\\' => 
+        'MaxMind\\Exception\\' =>
         array (
             0 => __DIR__ . '/..' . '/maxmind/web-service-common/src/Exception',
         ),
-        'MaxMind\\Db\\' => 
+        'MaxMind\\Db\\' =>
         array (
             0 => __DIR__ . '/..' . '/maxmind-db/reader/src/MaxMind/Db',
         ),
-        'GeoIp2\\' => 
+        'GeoIp2\\' =>
         array (
             0 => __DIR__ . '/..' . '/geoip2/geoip2/src',
         ),
-        'Composer\\CaBundle\\' => 
+        'Composer\\CaBundle\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/ca-bundle/src',
         ),
@@ -53,9 +53,9 @@ class ComposerStaticInit30a05b48d381f162e77519cbdb4a260f
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit30a05b48d381f162e77519cbdb4a260f::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit30a05b48d381f162e77519cbdb4a260f::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit30a05b48d381f162e77519cbdb4a260f::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitd068498a9809b93dd2a4b3efb6690bc8::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitd068498a9809b93dd2a4b3efb6690bc8::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitd068498a9809b93dd2a4b3efb6690bc8::$classMap;
 
         }, null, ClassLoader::class);
     }

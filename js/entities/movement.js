@@ -6,9 +6,10 @@ const WALK_SPEED = MOVE_CFG.walkSpeed;
 const RUN_SPEED = MOVE_CFG.runSpeed;
 const ACCEL = MOVE_CFG.accel;
 const DECEL = MOVE_CFG.decel;
+const DEFAULT_SPAWN = WORLD.spawn || CONFIG.player.spawn;
 
 const pl = {
-  x: CONFIG.player.spawn.x, y: CONFIG.player.spawn.y, angle: 0,
+  x: DEFAULT_SPAWN.x, y: DEFAULT_SPAWN.y, angle: 0,
   walkTime: 0, speed: 0, targetSpeed: 0,
   moving: false, running: false,
   crouching: false,
@@ -198,12 +199,19 @@ function update(dt) {
 
   pl.running = !emoteActive && !pl.crouching && !!(keys['ShiftLeft'] || keys['ShiftRight']);
   pl.moving = dx !== 0 || dz !== 0;
+  const debugBoosting = !emoteActive && pl.moving && !!keys['Space'];
 
   // ── Speed with acceleration/deceleration ──
   if (pl.moving) {
-    pl.targetSpeed = pl.crouching
+    let targetSpeed = pl.crouching
       ? MOVE_CFG.crouchSpeed
       : (pl.running ? RUN_SPEED : WALK_SPEED);
+
+    if (debugBoosting) {
+      targetSpeed *= MOVE_CFG.debugBoostMultiplier;
+    }
+
+    pl.targetSpeed = targetSpeed;
     pl.speed = lerpTo(pl.speed, pl.targetSpeed, ACCEL, dt);
   } else {
     pl.speed = lerpTo(pl.speed, 0, DECEL, dt);

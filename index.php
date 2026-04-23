@@ -1,9 +1,14 @@
 <?php
 session_start();
+require_once __DIR__ . '/world-source.php';
 
 if (empty($_SESSION['game_token'])) {
     $_SESSION['game_token'] = bin2hex(random_bytes(16));
 }
+
+$env = loadWorldEnvironment();
+$worldConfig = buildWorldBootstrapConfig($env);
+$remoteWorldData = buildRemoteWorldBootstrap($env);
 
 $siteUrl = 'https://isomania.online/';
 $pageTitle = 'Isomania — ізометрична survival-гра у браузері';
@@ -178,7 +183,9 @@ $ogImage = $siteUrl . 'screenshot.png?v=' . filemtime('screenshot.png');
   <script>
     window.ISOMANIA_BOOTSTRAP = {
       gameToken: '<?= htmlspecialchars($_SESSION['game_token'], ENT_QUOTES, 'UTF-8') ?>',
-      notifyUrl: 'notify.php?action=join'
+      notifyUrl: 'notify.php?action=join',
+      worldConfig: <?= json_encode($worldConfig, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}' ?>,
+      worldData: <?= json_encode($remoteWorldData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: 'null' ?>
     };
   </script>
   <script type="module" src="js/game.min.js?v=<?= filemtime('js/game.min.js') ?>"></script>
